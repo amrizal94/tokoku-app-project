@@ -18,6 +18,8 @@ type AuthPegawai struct {
 
 type PegawaiInterface interface {
 	Login(username, password string) (Pegawai, error)
+	Register(newPegawai Pegawai) (bool, error)
+	Duplicate(username string) bool
 }
 
 func NewPegawaiMenu(conn *sql.DB) PegawaiInterface {
@@ -65,4 +67,53 @@ func (ap *AuthPegawai) Login(username, password string) (Pegawai, error) {
 	}
 	res.username = username
 	return res, nil
+}
+
+func (ap *AuthPegawai) Duplicate(username string) bool {
+	res := ap.db.QueryRow("SELECT id FROM pegawai where username = ?", username)
+	var idExist int
+	err := res.Scan(&idExist)
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println("Result scan error", err.Error())
+			return true
+		}
+	}
+	if idExist > 0 {
+		return true
+	}
+	return false
+}
+
+func (ap *AuthPegawai) Register(newPegawai Pegawai) (bool, error) {
+	registerQry, err := ap.db.Prepare("INSERT INTO pegawai (username, password) values (?,?)")
+	if err != nil {
+		log.Println("prepare insert pegawai ", err.Error())
+		return false, errors.New("prepare statement insert pegawai error")
+	}
+
+	if ap.Duplicate(newPegawai.GetUsername()) {
+		log.Println("duplicated information")
+		return false, errors.New("username sudah digunakan")
+	}
+
+	// menjalankan query dengan parameter tertentu
+	res, err := registerQry.Exec(newPegawai.GetUsername(), newPegawai.GetPassword())
+	if err != nil {
+		log.Println("insert user ", err.Error())
+		return false, errors.New("insert username error")
+	}
+	// Cek berapa baris yang terpengaruh query diatas
+	affRows, err := res.RowsAffected()
+	if err != nil {
+		log.Println("after insert username ", err.Error())
+		return false, errors.New("error setelah insert")
+	}
+
+	if affRows <= 0 {
+		log.Println("no record affected")
+		return true, errors.New("no record")
+	}
+
+	return true, nil
 }

@@ -10,7 +10,7 @@ func main() {
 	var (
 		cfg             = config.ReadConfig()
 		conn            = config.ConnectSQL(*cfg)
-		AuthPegawai     = pegawai.NewPegawaiMenu(conn)
+		PegawaiMenu     = pegawai.NewPegawaiMenu(conn)
 		inputMenu   int = 1
 	)
 	for inputMenu != 0 {
@@ -29,7 +29,7 @@ func main() {
 			fmt.Scanln(&inNama)
 			fmt.Print("Masukkan password : ")
 			fmt.Scanln(&inPassword)
-			resLogin, err := AuthPegawai.Login(inNama, inPassword)
+			resLogin, err := PegawaiMenu.Login(inNama, inPassword)
 			if err != nil {
 				fmt.Println(err.Error())
 			}
@@ -37,12 +37,55 @@ func main() {
 				fmt.Println("==========================")
 				fmt.Println("Login sukses")
 				isLogged := true
+				var isAdmin bool
+				if resLogin.GetUsername() == "admin" && inPassword == "admin" {
+					isAdmin = !isAdmin
+				}
 				for isLogged {
 					fmt.Println("==========================")
+					if isAdmin {
+						fmt.Println("1. Tambah Pegawai")
+					} else {
+						fmt.Println("1. Tambah Pelanggan")
+					}
 					fmt.Println("9. Log out")
 					fmt.Println("0. Exit")
 					fmt.Scanln(&inputMenu)
 					switch inputMenu {
+					case 1:
+						if isAdmin {
+							var newPegawai pegawai.Pegawai
+							var tmp string
+							fmt.Println("==========================")
+							fmt.Println("TAMBAH PEGAWAI")
+							fmt.Print("Masukkan username : ")
+							fmt.Scanln(&tmp)
+							newPegawai.SetUsername(tmp)
+							fmt.Print("Masukkan password : ")
+							fmt.Scanln(&tmp)
+							newPegawai.SetPassword(tmp)
+							isAdded, err := PegawaiMenu.Register(newPegawai)
+							if err != nil {
+								fmt.Println(err.Error())
+							}
+							if isAdded {
+								fmt.Println("==========================")
+								fmt.Println("Sukses menambahkan pegawai")
+							} else {
+								fmt.Println("==========================")
+								fmt.Println("Gagal mendaftarn pegawai")
+							}
+						} else {
+							var tmp string
+							fmt.Println("==========================")
+							fmt.Println("TAMBAH PEGAWAI")
+							fmt.Print("Masukkan username : ")
+							fmt.Scanln(&tmp)
+							// newPegawai.SetUsername(tmp)
+							fmt.Print("Masukkan password : ")
+							fmt.Scanln(&tmp)
+							// newPegawai.SetPassword(tmp)
+						}
 					case 9:
 						isLogged = !isLogged
 					case 0:

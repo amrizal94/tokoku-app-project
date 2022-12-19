@@ -1,10 +1,14 @@
 use tokoku;
 
-DROP table pegawai;
-DROP table pelanggan;
-DROP table barang;
-DROP table transaksi;
 DROP table transaksi_barang;
+DROP table transaksi;
+DROP table barang;
+DROP table pelanggan;
+DROP table pegawai;
+
+
+
+
 
 CREATE table pegawai(
 	id int auto_increment primary key,
@@ -13,7 +17,7 @@ CREATE table pegawai(
 );
 
 CREATE table pelanggan(
-	hp int NOT NULL primary key,
+	hp varchar(25) NOT NULL primary key,
 	id_pegawai int NOT NULL,
 	nama varchar(255) NOT NULL,
 	constraint fk_pegawai_pelanggan foreign key (id_pegawai) references pegawai(id)
@@ -31,7 +35,7 @@ CREATE table barang(
 CREATE table transaksi(
 	id int auto_increment,
 	id_pegawai int NOT NULL,
-	hp int NOT NULL,
+	hp varchar(25) NOT NULL,
 	tanggal datetime,
 	primary key(id),
 	FOREIGN KEY(id_pegawai) REFERENCES pegawai(id),
