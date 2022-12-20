@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"tokoku-app-project/barang"
 	"tokoku-app-project/config"
 	"tokoku-app-project/pegawai"
@@ -42,7 +43,6 @@ func listBarang(barcode int) ([]barang.Barang, string, error) {
 		arrPegawai, _ := PegawaiMenu.Select(v.GetIDPegawai(), 0)
 		strBarang += fmt.Sprintf("Barcode: %d %s (%d) <%s>\n", v.GetBarcode(), v.GetNama(), v.GetStok(), arrPegawai[0].GetNama())
 	}
-
 	return arrBarang, strBarang, err
 }
 
@@ -85,6 +85,7 @@ func main() {
 					} else {
 						fmt.Println("1. Tambah Pelanggan")
 						fmt.Println("2. Tambah Barang")
+						fmt.Println("3. Edit Barang")
 					}
 					fmt.Println("9. Log out")
 					fmt.Println("0. Exit")
@@ -231,6 +232,75 @@ func main() {
 									deleteMode = !deleteMode
 								}
 							}
+						} else {
+							editMode := true
+							for editMode {
+								_, strBarang, err := listBarang(0)
+								if err != nil {
+									fmt.Println(err.Error())
+								}
+								if len(strBarang) > 0 {
+									fmt.Println("==========================")
+									fmt.Println("EDIT BARANG")
+									fmt.Print(strBarang)
+									fmt.Print("Masukkan barcode / 0. Kembali halaman: ")
+									var inBarcode int
+									fmt.Scanln(&inBarcode)
+									if inBarcode == 0 {
+										editMode = !editMode
+										continue
+									}
+									arrBarang, strBarang, err := listBarang(inBarcode)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+									if len(arrBarang) > 0 {
+										idx := strings.Index(strBarang, "<")
+										strBarang = strBarang[idx+1 : len(strBarang)-2]
+										var inStok int
+										reader := bufio.NewReader(os.Stdin)
+										fmt.Println("==========================")
+										fmt.Println("EDIT BARANG")
+										fmt.Print("Barcode\t\t:")
+										fmt.Println(arrBarang[0].GetBarcode())
+										fmt.Print("Nama barang\t:")
+										fmt.Println(arrBarang[0].GetNama())
+										fmt.Print("Stok\t\t:")
+										fmt.Println(arrBarang[0].GetStok())
+										fmt.Print("Created by\t:")
+										fmt.Println(strBarang)
+										fmt.Println("# Kosongkan input jika tidak ingin ada perubahan #")
+										fmt.Print("Masukkan nama barang : ")
+										nama, _ := reader.ReadString('\n')
+										nama = nama[:len(nama)-1]
+										if nama == "" {
+											nama = arrBarang[0].GetNama()
+										}
+										fmt.Print("Masukkan stok barang : ")
+										fmt.Scanln(&inStok)
+										if inStok == 0 {
+											inStok = arrBarang[0].GetStok()
+										}
+										isEdited, err := BarangMenu.Update(arrBarang[0].GetBarcode(), nama, inStok)
+										if err != nil {
+											fmt.Println(err.Error())
+										}
+										if isEdited {
+											fmt.Println("==========================")
+											fmt.Println("berhasil edit informasi barang")
+										} else {
+											fmt.Println("==========================")
+											fmt.Println("berhasil edit informasi barang")
+										}
+									} else {
+										fmt.Println("==========================")
+										fmt.Println("Kak", resLogin.GetNama(), "belum memiliki data barang satu pun")
+										editMode = !editMode
+									}
+
+								}
+							}
+
 						}
 					case 9:
 						isLogged = !isLogged

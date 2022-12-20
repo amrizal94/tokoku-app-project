@@ -51,6 +51,7 @@ CREATE table transaksi_barang(
 );
 desc pelanggan;
 desc pegawai;
+desc barang;
 
 ALTER TABLE tokoku.pegawai DROP COLUMN isActive;
 ALTER TABLE tokoku.pegawai ADD isActive BOOL DEFAULT false NOT NULL;
@@ -76,6 +77,7 @@ DELETE FROM pegawai WHERE id = 2;
 
 -- SELECT 
 SELECT * FROM pegawai;
+SELECT * FROM barang;
 
 
 

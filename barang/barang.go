@@ -20,6 +20,7 @@ type BarangInterface interface {
 	Insert(newBarang Barang) (bool, error)
 	Select(barcode int) ([]Barang, error)
 	Delete(barcode int) (bool, error)
+	Update(barcode int, nama string, stok int) (bool, error)
 }
 
 func NewBrangMenu(conn *sql.DB) BarangInterface {
@@ -132,6 +133,32 @@ func (bm *BarangMenu) Delete(barcode int) (bool, error) {
 		return false, errors.New("error setelah delete barang")
 	}
 	if affRows <= 0 {
+		log.Println("no record affected")
+		return false, errors.New("no record")
+	}
+	return true, nil
+}
+
+func (bm *BarangMenu) Update(barcode int, nama string, stok int) (bool, error) {
+	updateQry, err := bm.db.Prepare(`
+	UPDATE barang
+	SET nama = ?, stok = ?
+	WHERE barcode = ?;`)
+	if err != nil {
+		log.Println("prepare update barang", err.Error())
+		return false, errors.New("prepare statement update barang error")
+	}
+	res, err := updateQry.Exec(nama, stok, barcode)
+	if err != nil {
+		log.Println("update barang ", err.Error())
+		return false, errors.New("update barang error")
+	}
+	affRow, err := res.RowsAffected()
+	if err != nil {
+		log.Println("after update barang ", err.Error())
+		return false, errors.New("error setelah update barang")
+	}
+	if affRow <= 0 {
 		log.Println("no record affected")
 		return false, errors.New("no record")
 	}
