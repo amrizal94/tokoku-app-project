@@ -7,6 +7,7 @@ import (
 	"tokoku-app-project/barang"
 	"tokoku-app-project/config"
 	"tokoku-app-project/pegawai"
+	// "tokoku-app-project/pelanggan"
 )
 
 var (
@@ -46,6 +47,10 @@ func listBarang() ([]barang.Barang, string, error) {
 
 func main() {
 	var (
+		cfg         = config.ReadConfig()
+		conn        = config.ConnectSQL(*cfg)
+		PegawaiMenu = pegawai.NewPegawaiMenu(conn)
+		// Pelanggan       =pelanggan.NewPelangganMenu
 		inputMenu int = 1
 	)
 	for inputMenu != 0 {
@@ -106,10 +111,17 @@ func main() {
 							fmt.Print("Masukkan password : ")
 							fmt.Scanln(&tmp)
 							newPegawai.SetPassword(tmp)
-							newPegawai.SetIsActive(1)
-							isAdded, err := PegawaiMenu.Register(newPegawai)
+							isAdded, isActive, err := PegawaiMenu.Register(newPegawai)
 							if err != nil {
 								fmt.Println(err.Error())
+							} else {
+								if isActive > 0 {
+									isAdded, err = PegawaiMenu.Update(newPegawai.GetPassword(), newPegawai.GetNama(), int(newPegawai.GetIsActive()), isActive)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+								}
+
 							}
 							if isAdded {
 								fmt.Println("==========================")
@@ -128,71 +140,7 @@ func main() {
 							fmt.Print("Masukkan password : ")
 							fmt.Scanln(&tmp)
 							// newPegawai.SetPassword(tmp)
-						}
-					case 2:
-						if isAdmin {
-							deleteMode := true
-							for deleteMode {
-								_, strPegawai, err := listPegawai(0, resLogin.GetID())
-								if err != nil {
-									fmt.Println(err.Error())
-								}
-								if len(strPegawai) > 0 {
-									fmt.Println("==========================")
-									fmt.Println("HAPUS PEGAWAI")
-									fmt.Print(strPegawai)
-									fmt.Print("Masukkan ID pegawai / 0. Kembali halaman: ")
-									var inPegawaiID int
-									fmt.Scanln(&inPegawaiID)
-									if inPegawaiID == 0 {
-										deleteMode = !deleteMode
-										continue
-									}
-									isDeleted, err := PegawaiMenu.Delete(inPegawaiID, 0)
-									if err != nil {
-										fmt.Println(err.Error())
-									}
-									if isDeleted {
-										fmt.Println("==========================")
-										fmt.Println("berhasil menghapus kegiatan")
-									} else {
-										fmt.Println("==========================")
-										fmt.Println("gagal menghapus kegiatan")
-									}
-								} else {
-									fmt.Println("==========================")
-									fmt.Println("Kak", resLogin.GetNama(), "belum memiliki data pegawai satu pun")
-									deleteMode = !deleteMode
-								}
-							}
-						} else {
-							var newBarang barang.Barang
-							var tmp int
-							reader := bufio.NewReader(os.Stdin)
-							fmt.Println("==========================")
-							fmt.Println("TAMBAH BARANG")
-							fmt.Print("Masukkan barcode : ")
-							fmt.Scanln(&tmp)
-							newBarang.SetBarcode(tmp)
-							newBarang.SetIDPegawai(resLogin.GetID())
-							fmt.Print("Masukkan nama barang : ")
-							nama, _ := reader.ReadString('\n')
-							nama = nama[:len(nama)-1]
-							newBarang.SetNama(nama)
-							fmt.Print("Masukkan stok : ")
-							fmt.Scanln(&tmp)
-							newBarang.SetStok(tmp)
-							isAdded, err := BarangMenu.Insert(newBarang)
-							if err != nil {
-								fmt.Println(err.Error())
-							}
-							if isAdded {
-								fmt.Println("==========================")
-								fmt.Println("Sukses menambahkan barang")
-							} else {
-								fmt.Println("==========================")
-								fmt.Println("Gagal menambahkan barang")
-							}
+
 						}
 					case 3:
 						if isAdmin {

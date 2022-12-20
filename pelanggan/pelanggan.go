@@ -16,6 +16,11 @@ type PelangganMenu struct {
 	db *sql.DB
 }
 
+// Duplicate implements PelangganInterface
+func (*AuthPelanggan) Duplicate(id_pegawai string) (int, int8) {
+	panic("unimplemented")
+}
+
 // Register implements PelangganInterface
 type PelangganInterface interface {
 	Register(newPelanggan Pelanggan) (bool, int, error)
