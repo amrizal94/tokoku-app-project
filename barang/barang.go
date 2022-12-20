@@ -83,7 +83,11 @@ func (bm *BarangMenu) Insert(newBarang Barang) (bool, error) {
 }
 
 func (bm *BarangMenu) Select() ([]Barang, error) {
-	selectBarangQry, err := bm.db.Query(`
+	var (
+		selectBarangQry *sql.Rows
+		err             error
+	)
+	selectBarangQry, err = bm.db.Query(`
 	SELECT barcode, nama, stok
 	FROM barang;`)
 	if err != nil {

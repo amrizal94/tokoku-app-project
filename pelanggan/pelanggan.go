@@ -12,22 +12,17 @@ type Pelanggan struct {
 	nama       string
 }
 
-type AuthPelanggan struct {
+type PelangganMenu struct {
 	db *sql.DB
 }
 
 // Register implements PelangganInterface
-func (*AuthPelanggan) Register(newPelanggan Pelanggan) (bool, int, error) {
-	panic("unimplemented")
-}
-
 type PelangganInterface interface {
 	Register(newPelanggan Pelanggan) (bool, int, error)
-	Duplicate(id_pegawai string) (int, int8)
 }
 
 func NewPelangganMenu(conn *sql.DB) PelangganInterface {
-	return &AuthPelanggan{
+	return &PelangganMenu{
 		db: conn,
 	}
 }
@@ -52,7 +47,7 @@ func (p *Pelanggan) GetName() string {
 	return p.nama
 }
 
-func (ap *AuthPelanggan) Register1(newPelanggan Pelanggan) (bool, int, error) {
+func (ap *PelangganMenu) Register(newPelanggan Pelanggan) (bool, int, error) {
 	registerQry, err := ap.db.Prepare("INSERT INTO pelanggan (hp, id_pegawai, nama) values (?,?,?)")
 	if err != nil {
 		log.Println("prepare insert pegawai registerQry", err.Error())

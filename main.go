@@ -83,6 +83,7 @@ func main() {
 					} else {
 						fmt.Println("1. Tambah Pelanggan")
 						fmt.Println("2. Tambah Barang")
+						fmt.Println("3. Edit Barang")
 					}
 					fmt.Println("9. Log out")
 					fmt.Println("0. Exit")
@@ -228,6 +229,26 @@ func main() {
 									fmt.Println("==========================")
 									fmt.Println("Kak", resLogin.GetNama(), "belum memiliki data barang satu pun")
 									deleteMode = !deleteMode
+								}
+							}
+						} else {
+							editMode := true
+							for editMode {
+								_, strBarang, err := listBarang()
+								if err != nil {
+									fmt.Println(err.Error())
+								}
+								if len(strBarang) > 0 {
+									fmt.Println("==========================")
+									fmt.Println("EDIT BARANG")
+									fmt.Print(strBarang)
+									fmt.Print("Masukkan barcode barang / 0. Kembali halaman: ")
+									var inBarcode int
+									fmt.Scanln(&inBarcode)
+									if inBarcode == 0 {
+										editMode = !editMode
+										continue
+									}
 								}
 							}
 						}
