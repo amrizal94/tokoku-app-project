@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"strconv"
 )
 
 type Pelanggan struct {
@@ -18,6 +19,8 @@ type PelangganMenu struct {
 
 type PelangganInterface interface {
 	Insert(newPelanggan Pelanggan) (bool, error)
+	Select(hp string) ([]Pelanggan, error)
+	Delete(hp string) (bool, error)
 }
 
 func NewPelangganMenu(conn *sql.DB) PelangganInterface {
@@ -62,6 +65,67 @@ func (pm *PelangganMenu) Insert(newPelanggan Pelanggan) (bool, error) {
 	if err != nil {
 		log.Println("after insert pelanggan ", err.Error())
 		return false, errors.New("error setelah insert pelanggan")
+	}
+	if affRows <= 0 {
+		log.Println("no record affected")
+		return false, errors.New("no record")
+	}
+	return true, nil
+}
+
+func (pm *PelangganMenu) Select(hp string) ([]Pelanggan, error) {
+	var (
+		selectPelangganQry *sql.Rows
+		err                error
+	)
+	intHP, err := strconv.Atoi(hp)
+	if err != nil {
+		log.Println("convert string to integer", err.Error())
+		return nil, errors.New("convert string to integer")
+	}
+	if intHP == 0 {
+		selectPelangganQry, err = pm.db.Query(`
+		SELECT hp,id_pegawai,nama
+		FROM pelanggan;`)
+	} else {
+		selectPelangganQry, err = pm.db.Query(`
+		SELECT hp,id_pegawai,nama
+		FROM pelanggan
+		WHERE hp = ?;`, intHP)
+	}
+	if err != nil {
+		log.Println("select pelanggan", err.Error())
+		return nil, errors.New("select pelanggan error")
+	}
+
+	arrPelanggan := []Pelanggan{}
+	for selectPelangganQry.Next() {
+		var tmp Pelanggan
+		err = selectPelangganQry.Scan(&tmp.hp, &tmp.id_pegawai, &tmp.nama)
+		if err != nil {
+			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
+			return arrPelanggan, err
+		}
+		arrPelanggan = append(arrPelanggan, tmp)
+	}
+	return arrPelanggan, nil
+}
+
+func (pm *PelangganMenu) Delete(hp string) (bool, error) {
+	deletePelangganQry, err := pm.db.Prepare("DELETE FROM pelanggan WHERE hp = ?;")
+	if err != nil {
+		log.Println("prepare delete pelanggan ", err.Error())
+		return false, errors.New("prepare statement delete pelanggan error")
+	}
+	res, err := deletePelangganQry.Exec(hp)
+	if err != nil {
+		log.Println("delete pelanggan ", err.Error())
+		return false, errors.New("delete pelanggan error")
+	}
+	affRows, err := res.RowsAffected()
+	if err != nil {
+		log.Println("after delete pelanggan ", err.Error())
+		return false, errors.New("error setelah delete pelanggan")
 	}
 	if affRows <= 0 {
 		log.Println("no record affected")

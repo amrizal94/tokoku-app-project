@@ -48,6 +48,21 @@ func listBarang(barcode int) ([]barang.Barang, string, error) {
 	return arrBarang, strBarang, err
 }
 
+func listPelanggan(hp string) ([]pelanggan.Pelanggan, string, error) {
+	arrPelanggan, err := PelangganMenu.Select(hp)
+
+	var strPelanggan string
+	if err != nil {
+		fmt.Println(err.Error())
+		return arrPelanggan, strPelanggan, err
+	}
+	for _, v := range arrPelanggan {
+		arrPegawai, _ := PegawaiMenu.Select(v.GetIDPegawai(), 0)
+		strPelanggan += fmt.Sprintf("HP: %s %s <%s>\n", v.GetHP(), v.GetNama(), arrPegawai[0].GetNama())
+	}
+	return arrPelanggan, strPelanggan, err
+}
+
 func main() {
 	var (
 		inputMenu int = 1
@@ -226,7 +241,7 @@ func main() {
 									fmt.Println("==========================")
 									fmt.Println("HAPUS BARANG")
 									fmt.Print(strBarang)
-									fmt.Print("Masukkan barcode barang / 0. Kembali halaman: ")
+									fmt.Print("Masukkan barcode / 0. Kembali halaman: ")
 									var inBarcode int
 									fmt.Scanln(&inBarcode)
 									if inBarcode == 0 {
@@ -322,8 +337,40 @@ func main() {
 						}
 					case 4:
 						if isAdmin {
-							fmt.Println("==========================")
-							fmt.Println("HAPUS PELANGGAN")
+							deleteMode := true
+							for deleteMode {
+								_, strPelanggan, err := listPelanggan("0")
+								if err != nil {
+									fmt.Println(err.Error())
+								}
+								if len(strPelanggan) > 0 {
+									fmt.Println("==========================")
+									fmt.Println("HAPUS PELANGGAN")
+									fmt.Print(strPelanggan)
+									fmt.Print("Masukkan no. hp / 0. Kembali halaman: ")
+									var inHP string
+									fmt.Scanln(&inHP)
+									if inHP == "0" {
+										deleteMode = !deleteMode
+										continue
+									}
+									isDeleted, err := PelangganMenu.Delete(inHP)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+									if isDeleted {
+										fmt.Println("==========================")
+										fmt.Println("berhasil menghapus pelanggan")
+									} else {
+										fmt.Println("==========================")
+										fmt.Println("gagal menghapus pelanggan")
+									}
+								} else {
+									fmt.Println("==========================")
+									fmt.Println("Kak", resLogin.GetNama(), "belum memiliki data pelanggan satu pun")
+									deleteMode = !deleteMode
+								}
+							}
 						}
 					case 9:
 						isLogged = !isLogged

@@ -78,6 +78,7 @@ DELETE FROM pegawai WHERE id = 2;
 -- SELECT 
 SELECT * FROM pegawai;
 SELECT * FROM barang;
+SELECT * FROM pelanggan p ;
 
 
 
