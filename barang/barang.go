@@ -89,11 +89,11 @@ func (bm *BarangMenu) Select(barcode int) ([]Barang, error) {
 	)
 	if barcode == 0 {
 		selectBarangQry, err = bm.db.Query(`
-		SELECT barcode, nama, stok
+		SELECT barcode,id_pegawai,nama,stok
 		FROM barang;`)
 	} else {
 		selectBarangQry, err = bm.db.Query(`
-		SELECT barcode, nama, stok
+		SELECT barcode,id_pegawai,nama,stok
 		FROM barang
 		WHERE barcode = ?;`, barcode)
 	}
@@ -105,7 +105,7 @@ func (bm *BarangMenu) Select(barcode int) ([]Barang, error) {
 	arrBarang := []Barang{}
 	for selectBarangQry.Next() {
 		var tmp Barang
-		err = selectBarangQry.Scan(&tmp.barcode, &tmp.nama, &tmp.stok)
+		err = selectBarangQry.Scan(&tmp.barcode, &tmp.id_pegawai, &tmp.nama, &tmp.stok)
 		if err != nil {
 			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
 			return arrBarang, err

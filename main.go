@@ -32,13 +32,15 @@ func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
 
 func listBarang(barcode int) ([]barang.Barang, string, error) {
 	arrBarang, err := BarangMenu.Select(barcode)
+
 	var strBarang string
 	if err != nil {
 		fmt.Println(err.Error())
 		return arrBarang, strBarang, err
 	}
 	for _, v := range arrBarang {
-		strBarang += fmt.Sprintln("Barcode :", v.GetBarcode(), v.GetNama())
+		arrPegawai, _ := PegawaiMenu.Select(v.GetIDPegawai(), 0)
+		strBarang += fmt.Sprintf("Barcode: %d %s (%d) <%s>\n", v.GetBarcode(), v.GetNama(), v.GetStok(), arrPegawai[0].GetNama())
 	}
 
 	return arrBarang, strBarang, err
