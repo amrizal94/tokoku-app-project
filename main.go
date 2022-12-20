@@ -8,13 +8,15 @@ import (
 	"tokoku-app-project/barang"
 	"tokoku-app-project/config"
 	"tokoku-app-project/pegawai"
+	"tokoku-app-project/pelanggan"
 )
 
 var (
-	cfg         = config.ReadConfig()
-	conn        = config.ConnectSQL(*cfg)
-	PegawaiMenu = pegawai.NewPegawaiMenu(conn)
-	BarangMenu  = barang.NewBrangMenu(conn)
+	cfg           = config.ReadConfig()
+	conn          = config.ConnectSQL(*cfg)
+	PegawaiMenu   = pegawai.NewPegawaiMenu(conn)
+	BarangMenu    = barang.NewBarangMenu(conn)
+	PelangganMenu = pelanggan.NewPelangganMenu(conn)
 )
 
 func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
@@ -82,6 +84,7 @@ func main() {
 						fmt.Println("1. Tambah Pegawai")
 						fmt.Println("2. Hapus Pegawai")
 						fmt.Println("3. Hapus Barang")
+						fmt.Println("4. Hapus Pelanggan")
 					} else {
 						fmt.Println("1. Tambah Pelanggan")
 						fmt.Println("2. Tambah Barang")
@@ -121,15 +124,30 @@ func main() {
 								fmt.Println("Gagal mendaftarn pegawai")
 							}
 						} else {
-							var tmp string
+							var newPelanggan pelanggan.Pelanggan
+							var inHP string
+							reader := bufio.NewReader(os.Stdin)
 							fmt.Println("==========================")
 							fmt.Println("TAMBAH PELANGGAN")
 							fmt.Print("Masukkan nomer hp : ")
-							fmt.Scanln(&tmp)
-							// newPegawai.SetUsername(tmp)
-							fmt.Print("Masukkan password : ")
-							fmt.Scanln(&tmp)
-							// newPegawai.SetPassword(tmp)
+							fmt.Scanln(&inHP)
+							newPelanggan.SetHP(inHP)
+							newPelanggan.SetIDPegawai(resLogin.GetID())
+							fmt.Print("Masukkan nama : ")
+							nama, _ := reader.ReadString('\n')
+							nama = nama[:len(nama)-1]
+							newPelanggan.SetNama(nama)
+							isInserted, err := PelangganMenu.Insert(newPelanggan)
+							if err != nil {
+								fmt.Println(err.Error())
+							}
+							if isInserted {
+								fmt.Println("==========================")
+								fmt.Println("Sukses menambahkan pelanggan")
+							} else {
+								fmt.Println("==========================")
+								fmt.Println("Gagal mendaftarn pelanggan")
+							}
 						}
 					case 2:
 						if isAdmin {
@@ -301,6 +319,11 @@ func main() {
 								}
 							}
 
+						}
+					case 4:
+						if isAdmin {
+							fmt.Println("==========================")
+							fmt.Println("HAPUS PELANGGAN")
 						}
 					case 9:
 						isLogged = !isLogged

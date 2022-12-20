@@ -23,7 +23,7 @@ type BarangInterface interface {
 	Update(barcode int, nama string, stok int) (bool, error)
 }
 
-func NewBrangMenu(conn *sql.DB) BarangInterface {
+func NewBarangMenu(conn *sql.DB) BarangInterface {
 	return &BarangMenu{
 		db: conn,
 	}
