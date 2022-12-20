@@ -30,6 +30,20 @@ func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
 	return arrPegawai, strPegawai, err
 }
 
+func listBarang() ([]barang.Barang, string, error) {
+	arrBarang, err := BarangMenu.Select()
+	var strBarang string
+	if err != nil {
+		fmt.Println(err.Error())
+		return arrBarang, strBarang, err
+	}
+	for _, v := range arrBarang {
+		strBarang += fmt.Sprintln("Barcode :", v.GetBarcode(), v.GetNama())
+	}
+
+	return arrBarang, strBarang, err
+}
+
 func main() {
 	var (
 		inputMenu int = 1
@@ -65,6 +79,7 @@ func main() {
 					if isAdmin {
 						fmt.Println("1. Tambah Pegawai")
 						fmt.Println("2. Hapus Pegawai")
+						fmt.Println("3. Hapus Barang")
 					} else {
 						fmt.Println("1. Tambah Pelanggan")
 						fmt.Println("2. Tambah Barang")
@@ -176,6 +191,44 @@ func main() {
 							} else {
 								fmt.Println("==========================")
 								fmt.Println("Gagal menambahkan barang")
+							}
+						}
+					case 3:
+						if isAdmin {
+							deleteMode := true
+							for deleteMode {
+								listBarang()
+								_, strBarang, err := listBarang()
+								if err != nil {
+									fmt.Println(err.Error())
+								}
+								if len(strBarang) > 0 {
+									fmt.Println("==========================")
+									fmt.Println("HAPUS BARANG")
+									fmt.Print(strBarang)
+									fmt.Print("Masukkan barcode barang / 0. Kembali halaman: ")
+									var inBarcode int
+									fmt.Scanln(&inBarcode)
+									if inBarcode == 0 {
+										deleteMode = !deleteMode
+										continue
+									}
+									isDeleted, err := BarangMenu.Delete(inBarcode)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+									if isDeleted {
+										fmt.Println("==========================")
+										fmt.Println("berhasil menghapus barang")
+									} else {
+										fmt.Println("==========================")
+										fmt.Println("gagal menghapus barang")
+									}
+								} else {
+									fmt.Println("==========================")
+									fmt.Println("Kak", resLogin.GetNama(), "belum memiliki data barang satu pun")
+									deleteMode = !deleteMode
+								}
 							}
 						}
 					case 9:
