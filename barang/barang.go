@@ -18,7 +18,7 @@ type BarangMenu struct {
 
 type BarangInterface interface {
 	Insert(newBarang Barang) (bool, error)
-	Select(id int) ([]Barang, error)
+	Select(barcode int) ([]Barang, error)
 	Delete(barcode int) (bool, error)
 }
 

@@ -30,8 +30,8 @@ func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
 	return arrPegawai, strPegawai, err
 }
 
-func listBarang(id int) ([]barang.Barang, string, error) {
-	arrBarang, err := BarangMenu.Select(id)
+func listBarang(barcode int) ([]barang.Barang, string, error) {
+	arrBarang, err := BarangMenu.Select(barcode)
 	var strBarang string
 	if err != nil {
 		fmt.Println(err.Error())
