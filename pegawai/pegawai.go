@@ -106,13 +106,13 @@ func (pm *PegawaiMenu) Register(newPegawai Pegawai) (bool, error) {
 		log.Println("prepare insert pegawai registerQry", err.Error())
 		return false, errors.New("prepare statement insert pegawai error registerQry")
 	}
-	isDuplicate, isActive := pm.Duplicate(newPegawai.username)
-	if isDuplicate > 0 {
+	idRegistered, isActive := pm.Duplicate(newPegawai.username)
+	if idRegistered > 0 {
 		if isActive > 0 {
 			log.Println("duplicated information registerQry")
 			return false, errors.New("username sudah digunakan registerQry")
 		} else {
-			newPegawai.id = isDuplicate
+			newPegawai.id = idRegistered
 			res, err := pm.Update(newPegawai)
 
 			return res, err
