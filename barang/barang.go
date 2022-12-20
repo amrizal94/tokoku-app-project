@@ -11,6 +11,7 @@ type Barang struct {
 	id_pegawai int
 	nama       string
 	stok       int
+	harga      int
 }
 type BarangMenu struct {
 	db *sql.DB
@@ -20,7 +21,7 @@ type BarangInterface interface {
 	Insert(newBarang Barang) (bool, error)
 	Select(barcode int) ([]Barang, error)
 	Delete(barcode int) (bool, error)
-	Update(barcode int, nama string, stok int) (bool, error)
+	Update(barcode int, nama string, stok int, harga int) (bool, error)
 }
 
 func NewBarangMenu(conn *sql.DB) BarangInterface {
@@ -41,6 +42,9 @@ func (b *Barang) SetNama(newNama string) {
 func (b *Barang) SetStok(newStok int) {
 	b.stok = newStok
 }
+func (b *Barang) SetHarga(newHarga int) {
+	b.harga = newHarga
+}
 
 func (b *Barang) GetBarcode() int {
 	return b.barcode
@@ -54,15 +58,18 @@ func (b *Barang) GetNama() string {
 func (b *Barang) GetStok() int {
 	return b.stok
 }
+func (b *Barang) GetHarga() int {
+	return b.harga
+}
 
 func (bm *BarangMenu) Insert(newBarang Barang) (bool, error) {
-	insertBarang, err := bm.db.Prepare("INSERT INTO barang (barcode, id_pegawai, nama, stok) values (?,?,?,?)")
+	insertBarang, err := bm.db.Prepare("INSERT INTO barang (barcode, id_pegawai, nama, stok, harga) values (?,?,?,?,?)")
 	if err != nil {
 		log.Println("prepare insert barang ", err.Error())
 		return false, errors.New("prepare statement insert barang error")
 	}
 
-	res, err := insertBarang.Exec(newBarang.barcode, newBarang.id_pegawai, newBarang.nama, newBarang.stok)
+	res, err := insertBarang.Exec(newBarang.barcode, newBarang.id_pegawai, newBarang.nama, newBarang.stok, newBarang.harga)
 
 	if err != nil {
 		log.Println("insert barang ", err.Error())
@@ -90,11 +97,11 @@ func (bm *BarangMenu) Select(barcode int) ([]Barang, error) {
 	)
 	if barcode == 0 {
 		selectBarangQry, err = bm.db.Query(`
-		SELECT barcode,id_pegawai,nama,stok
+		SELECT barcode,id_pegawai,nama,stok,harga
 		FROM barang;`)
 	} else {
 		selectBarangQry, err = bm.db.Query(`
-		SELECT barcode,id_pegawai,nama,stok
+		SELECT barcode,id_pegawai,nama,stok,harga
 		FROM barang
 		WHERE barcode = ?;`, barcode)
 	}
@@ -106,7 +113,7 @@ func (bm *BarangMenu) Select(barcode int) ([]Barang, error) {
 	arrBarang := []Barang{}
 	for selectBarangQry.Next() {
 		var tmp Barang
-		err = selectBarangQry.Scan(&tmp.barcode, &tmp.id_pegawai, &tmp.nama, &tmp.stok)
+		err = selectBarangQry.Scan(&tmp.barcode, &tmp.id_pegawai, &tmp.nama, &tmp.stok, &tmp.harga)
 		if err != nil {
 			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
 			return arrBarang, err
@@ -139,16 +146,16 @@ func (bm *BarangMenu) Delete(barcode int) (bool, error) {
 	return true, nil
 }
 
-func (bm *BarangMenu) Update(barcode int, nama string, stok int) (bool, error) {
+func (bm *BarangMenu) Update(barcode int, nama string, stok int, harga int) (bool, error) {
 	updateQry, err := bm.db.Prepare(`
 	UPDATE barang
-	SET nama = ?, stok = ?
+	SET nama = ?, stok = ?, harga = ?
 	WHERE barcode = ?;`)
 	if err != nil {
 		log.Println("prepare update barang", err.Error())
 		return false, errors.New("prepare statement update barang error")
 	}
-	res, err := updateQry.Exec(nama, stok, barcode)
+	res, err := updateQry.Exec(nama, stok, harga, barcode)
 	if err != nil {
 		log.Println("update barang ", err.Error())
 		return false, errors.New("update barang error")

@@ -57,6 +57,8 @@ ALTER TABLE tokoku.pegawai DROP COLUMN isActive;
 ALTER TABLE tokoku.pegawai ADD isActive BOOL DEFAULT false NOT NULL;
 ALTER TABLE tokoku.pegawai ADD nama varchar(255) NOT NULL;
 ALTER TABLE tokoku.pegawai MODIFY isActive BOOL DEFAULT false NOT NULL;
+ALTER TABLE tokoku.barang ADD harga int NOT NULL;
+
 
 
 -- INSERT 
@@ -79,6 +81,8 @@ DELETE FROM pegawai WHERE id = 2;
 SELECT * FROM pegawai;
 SELECT * FROM barang;
 SELECT * FROM pelanggan p ;
+SELECT barcode,id_pegawai,nama,stok,harga
+FROM barang;
 
 
 

@@ -43,7 +43,7 @@ func listBarang(barcode int) ([]barang.Barang, string, error) {
 	}
 	for _, v := range arrBarang {
 		arrPegawai, _ := PegawaiMenu.Select(v.GetIDPegawai(), 0)
-		strBarang += fmt.Sprintf("Barcode: %d %s (%d) <%s>\n", v.GetBarcode(), v.GetNama(), v.GetStok(), arrPegawai[0].GetNama())
+		strBarang += fmt.Sprintf("Barcode: %d %s (%d) (%d) <%s>\n", v.GetBarcode(), v.GetNama(), v.GetStok(), v.GetHarga(), arrPegawai[0].GetNama())
 	}
 	return arrBarang, strBarang, err
 }
@@ -104,6 +104,7 @@ func main() {
 						fmt.Println("1. Tambah Pelanggan")
 						fmt.Println("2. Tambah Barang")
 						fmt.Println("3. Edit Barang")
+						fmt.Println("4. Nota Transaksi")
 					}
 					fmt.Println("9. Log out")
 					fmt.Println("0. Exit")
@@ -217,6 +218,9 @@ func main() {
 							fmt.Print("Masukkan stok : ")
 							fmt.Scanln(&tmp)
 							newBarang.SetStok(tmp)
+							fmt.Print("Masukkan harga : ")
+							fmt.Scanln(&tmp)
+							newBarang.SetHarga(tmp)
 							isAdded, err := BarangMenu.Insert(newBarang)
 							if err != nil {
 								fmt.Println(err.Error())
@@ -289,8 +293,8 @@ func main() {
 									}
 									if len(arrBarang) > 0 {
 										idx := strings.Index(strBarang, "<")
-										strBarang = strBarang[idx+1 : len(strBarang)-2]
-										var inStok int
+										createdBy := strBarang[idx+1 : len(strBarang)-2]
+										var inStok, inHarga int
 										reader := bufio.NewReader(os.Stdin)
 										fmt.Println("==========================")
 										fmt.Println("EDIT BARANG")
@@ -300,8 +304,10 @@ func main() {
 										fmt.Println(arrBarang[0].GetNama())
 										fmt.Print("Stok\t\t:")
 										fmt.Println(arrBarang[0].GetStok())
+										fmt.Print("Harga\t\t:")
+										fmt.Println(arrBarang[0].GetHarga())
 										fmt.Print("Created by\t:")
-										fmt.Println(strBarang)
+										fmt.Println(createdBy)
 										fmt.Println("# Kosongkan input jika tidak ingin ada perubahan #")
 										fmt.Print("Masukkan nama barang : ")
 										nama, _ := reader.ReadString('\n')
@@ -314,7 +320,12 @@ func main() {
 										if inStok == 0 {
 											inStok = arrBarang[0].GetStok()
 										}
-										isEdited, err := BarangMenu.Update(arrBarang[0].GetBarcode(), nama, inStok)
+										fmt.Print("Masukkan harga barang : ")
+										fmt.Scanln(&inHarga)
+										if inHarga == 0 {
+											inHarga = arrBarang[0].GetHarga()
+										}
+										isEdited, err := BarangMenu.Update(arrBarang[0].GetBarcode(), nama, inStok, inHarga)
 										if err != nil {
 											fmt.Println(err.Error())
 										}
