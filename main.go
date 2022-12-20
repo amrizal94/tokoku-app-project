@@ -30,8 +30,8 @@ func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
 	return arrPegawai, strPegawai, err
 }
 
-func listBarang() ([]barang.Barang, string, error) {
-	arrBarang, err := BarangMenu.Select()
+func listBarang(id int) ([]barang.Barang, string, error) {
+	arrBarang, err := BarangMenu.Select(id)
 	var strBarang string
 	if err != nil {
 		fmt.Println(err.Error())
@@ -197,8 +197,7 @@ func main() {
 						if isAdmin {
 							deleteMode := true
 							for deleteMode {
-								listBarang()
-								_, strBarang, err := listBarang()
+								_, strBarang, err := listBarang(0)
 								if err != nil {
 									fmt.Println(err.Error())
 								}
