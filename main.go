@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"tokoku-app-project/config"
 	"tokoku-app-project/pegawai"
 )
@@ -15,17 +17,15 @@ func main() {
 	)
 	for inputMenu != 0 {
 		fmt.Println("==========================")
-		fmt.Println("1. Register")
-		fmt.Println("2. Login")
+		fmt.Println("1. Login")
 		fmt.Println("0. Exit")
 		fmt.Scanln(&inputMenu)
 		switch inputMenu {
 		case 1:
-		case 2:
 			var inNama, inPassword string
 			fmt.Println("==========================")
 			fmt.Println("LOGIN")
-			fmt.Print("Masukkan nama : ")
+			fmt.Print("Masukkan username : ")
 			fmt.Scanln(&inNama)
 			fmt.Print("Masukkan password : ")
 			fmt.Scanln(&inPassword)
@@ -35,7 +35,7 @@ func main() {
 			}
 			if resLogin.GetID() > 0 {
 				fmt.Println("==========================")
-				fmt.Println("Login sukses")
+				fmt.Println("Login sukses, selamat datang", resLogin.GetNama())
 				isLogged := true
 				var isAdmin bool
 				if resLogin.GetUsername() == "admin" && inPassword == "admin" {
@@ -56,17 +56,30 @@ func main() {
 						if isAdmin {
 							var newPegawai pegawai.Pegawai
 							var tmp string
+							reader := bufio.NewReader(os.Stdin)
 							fmt.Println("==========================")
 							fmt.Println("TAMBAH PEGAWAI")
+							fmt.Print("Masukkan nama : ")
+							nama, _ := reader.ReadString('\n')
+							nama = nama[:len(nama)-1]
+							newPegawai.SetNama(nama)
 							fmt.Print("Masukkan username : ")
 							fmt.Scanln(&tmp)
 							newPegawai.SetUsername(tmp)
 							fmt.Print("Masukkan password : ")
 							fmt.Scanln(&tmp)
 							newPegawai.SetPassword(tmp)
-							isAdded, err := PegawaiMenu.Register(newPegawai)
+							isAdded, isActive, err := PegawaiMenu.Register(newPegawai)
 							if err != nil {
 								fmt.Println(err.Error())
+							} else {
+								if isActive > 0 {
+									isAdded, err = PegawaiMenu.Update(newPegawai.GetPassword(), newPegawai.GetNama(), int(newPegawai.GetIsActive()), isActive)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+								}
+
 							}
 							if isAdded {
 								fmt.Println("==========================")
@@ -78,8 +91,8 @@ func main() {
 						} else {
 							var tmp string
 							fmt.Println("==========================")
-							fmt.Println("TAMBAH PEGAWAI")
-							fmt.Print("Masukkan username : ")
+							fmt.Println("TAMBAH PELANGGAN")
+							fmt.Print("Masukkan nomer hp : ")
 							fmt.Scanln(&tmp)
 							// newPegawai.SetUsername(tmp)
 							fmt.Print("Masukkan password : ")

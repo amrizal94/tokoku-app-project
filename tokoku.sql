@@ -49,9 +49,34 @@ CREATE table transaksi_barang(
 	FOREIGN KEY(id_transaksi) REFERENCES transaksi(id),
   	FOREIGN KEY(barcode) REFERENCES barang(barcode)
 );
+desc pelanggan;
+desc pegawai;
+
+ALTER TABLE tokoku.pegawai DROP COLUMN isActive;
+ALTER TABLE tokoku.pegawai ADD isActive BOOL DEFAULT false NOT NULL;
+ALTER TABLE tokoku.pegawai ADD nama varchar(255) NOT NULL;
+ALTER TABLE tokoku.pegawai MODIFY isActive BOOL DEFAULT false NOT NULL;
+
 
 -- INSERT 
-INSERT into pegawai (username, password) values ('admin', 'admin');
+INSERT into pegawai (username, password, nama, isActive) values ('admin', 'admin', 'Admin', '1');
+
+-- UPDATE 
+UPDATE pegawai p
+SET nama = 'Admin'
+WHERE p.id = 1;
+
+UPDATE pegawai p
+SET isActive = 1
+WHERE p.id = 1;
+
+-- DELETE 
+DELETE FROM pegawai WHERE id = 2;
+
+
+-- SELECT 
+SELECT * FROM pegawai;
+
 
 
 
