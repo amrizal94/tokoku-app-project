@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"tokoku-app-project/barang"
 	"tokoku-app-project/config"
 	"tokoku-app-project/pegawai"
 )
@@ -12,6 +13,7 @@ var (
 	cfg         = config.ReadConfig()
 	conn        = config.ConnectSQL(*cfg)
 	PegawaiMenu = pegawai.NewPegawaiMenu(conn)
+	BarangMenu  = barang.NewBrangMenu(conn)
 )
 
 func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
@@ -65,6 +67,7 @@ func main() {
 						fmt.Println("2. Hapus Pegawai")
 					} else {
 						fmt.Println("1. Tambah Pelanggan")
+						fmt.Println("2. Tambah Barang")
 					}
 					fmt.Println("9. Log out")
 					fmt.Println("0. Exit")
@@ -145,6 +148,34 @@ func main() {
 									fmt.Println("Kak", resLogin.GetNama(), "belum memiliki data pegawai satu pun")
 									deleteMode = !deleteMode
 								}
+							}
+						} else {
+							var newBarang barang.Barang
+							var tmp int
+							reader := bufio.NewReader(os.Stdin)
+							fmt.Println("==========================")
+							fmt.Println("TAMBAH BARANG")
+							fmt.Print("Masukkan barcode : ")
+							fmt.Scanln(&tmp)
+							newBarang.SetBarcode(tmp)
+							newBarang.SetIDPegawai(resLogin.GetID())
+							fmt.Print("Masukkan nama barang : ")
+							nama, _ := reader.ReadString('\n')
+							nama = nama[:len(nama)-1]
+							newBarang.SetNama(nama)
+							fmt.Print("Masukkan stok : ")
+							fmt.Scanln(&tmp)
+							newBarang.SetStok(tmp)
+							isAdded, err := BarangMenu.Insert(newBarang)
+							if err != nil {
+								fmt.Println(err.Error())
+							}
+							if isAdded {
+								fmt.Println("==========================")
+								fmt.Println("Sukses menambahkan barang")
+							} else {
+								fmt.Println("==========================")
+								fmt.Println("Gagal menambahkan barang")
 							}
 						}
 					case 9:

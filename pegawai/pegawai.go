@@ -14,7 +14,7 @@ type Pegawai struct {
 	isActive int8
 }
 
-type AuthPegawai struct {
+type PegawaiMenu struct {
 	db *sql.DB
 }
 
@@ -28,7 +28,7 @@ type PegawaiInterface interface {
 }
 
 func NewPegawaiMenu(conn *sql.DB) PegawaiInterface {
-	return &AuthPegawai{
+	return &PegawaiMenu{
 		db: conn,
 	}
 }
@@ -62,8 +62,8 @@ func (p *Pegawai) GetIsActive() int8 {
 	return p.isActive
 }
 
-func (ap *AuthPegawai) Login(username, password string) (Pegawai, error) {
-	loginQry, err := ap.db.Prepare(`
+func (pm *PegawaiMenu) Login(username, password string) (Pegawai, error) {
+	loginQry, err := pm.db.Prepare(`
 	SELECT id, nama
 	FROM pegawai
 	WHERE username = ? and password = ? and isActive = 1;`)
@@ -85,8 +85,8 @@ func (ap *AuthPegawai) Login(username, password string) (Pegawai, error) {
 	return res, nil
 }
 
-func (ap *AuthPegawai) Duplicate(username string) (int, int8) {
-	res := ap.db.QueryRow("SELECT id, isActive FROM pegawai where username = ?", username)
+func (pm *PegawaiMenu) Duplicate(username string) (int, int8) {
+	res := pm.db.QueryRow("SELECT id, isActive FROM pegawai where username = ?", username)
 	var tmp Pegawai
 	if err := res.Scan(&tmp.id, &tmp.isActive); err != nil {
 		if err.Error() != "sql: no rows in result set" {
@@ -100,20 +100,20 @@ func (ap *AuthPegawai) Duplicate(username string) (int, int8) {
 	return tmp.id, tmp.isActive
 }
 
-func (ap *AuthPegawai) Register(newPegawai Pegawai) (bool, error) {
-	registerQry, err := ap.db.Prepare("INSERT INTO pegawai (username, password, nama, isActive) values (?,?,?,1)")
+func (pm *PegawaiMenu) Register(newPegawai Pegawai) (bool, error) {
+	registerQry, err := pm.db.Prepare("INSERT INTO pegawai (username, password, nama, isActive) values (?,?,?,1)")
 	if err != nil {
 		log.Println("prepare insert pegawai registerQry", err.Error())
 		return false, errors.New("prepare statement insert pegawai error registerQry")
 	}
-	isDuplicate, isActive := ap.Duplicate(newPegawai.username)
+	isDuplicate, isActive := pm.Duplicate(newPegawai.username)
 	if isDuplicate > 0 {
 		if isActive > 0 {
 			log.Println("duplicated information registerQry")
 			return false, errors.New("username sudah digunakan registerQry")
 		} else {
 			newPegawai.id = isDuplicate
-			res, err := ap.Update(newPegawai)
+			res, err := pm.Update(newPegawai)
 
 			return res, err
 		}
@@ -140,9 +140,9 @@ func (ap *AuthPegawai) Register(newPegawai Pegawai) (bool, error) {
 
 	return true, nil
 }
-func (ap *AuthPegawai) Update(newPegawai Pegawai) (bool, error) {
+func (pm *PegawaiMenu) Update(newPegawai Pegawai) (bool, error) {
 
-	resSelect, err := ap.Select(newPegawai.id, 0)
+	resSelect, err := pm.Select(newPegawai.id, 0)
 	if err != nil {
 		log.Println("res Select")
 		return false, errors.New("data pegawai tidak ada")
@@ -154,7 +154,7 @@ func (ap *AuthPegawai) Update(newPegawai Pegawai) (bool, error) {
 		newPegawai.nama = resSelect[0].nama
 	}
 
-	updateQry, err := ap.db.Prepare(`
+	updateQry, err := pm.db.Prepare(`
 	UPDATE pegawai
 	SET password = ?, nama = ?, isActive = ?
 	WHERE id = ?;`)
@@ -195,22 +195,24 @@ func (ap *AuthPegawai) Update(newPegawai Pegawai) (bool, error) {
 	return true, nil
 }
 
-func (ap *AuthPegawai) Select(id, id_logged int) ([]Pegawai, error) {
+func (pm *PegawaiMenu) Select(id, id_logged int) ([]Pegawai, error) {
 	var (
 		selectPegawaiQry *sql.Rows
 		err              error
 		cases            int8
 	)
 	if id == 0 && id_logged != 0 {
+		// case 1 untuk memanggil list pegawai yg aktif kecuali admin
 		cases = 1
-		selectPegawaiQry, err = ap.db.Query(`
+		selectPegawaiQry, err = pm.db.Query(`
 		SELECT id, nama
 		FROM pegawai
 		WHERE id != ?
 		AND isActive = 1;`, id_logged)
 	} else if id != 0 && id_logged == 0 {
+		// case 2 untuk memanggil data pegawai menurut idnya
 		cases = 2
-		selectPegawaiQry, err = ap.db.Query(`
+		selectPegawaiQry, err = pm.db.Query(`
 		SELECT username, password, nama
 		FROM pegawai
 		WHERE id = ?;`, id)
@@ -238,10 +240,10 @@ func (ap *AuthPegawai) Select(id, id_logged int) ([]Pegawai, error) {
 	return arrPegawai, nil
 }
 
-func (ap *AuthPegawai) Delete(id, isActive int) (bool, error) {
+func (pm *PegawaiMenu) Delete(id, isActive int) (bool, error) {
 	newPegawai := Pegawai{}
 	newPegawai.id = id
 	newPegawai.isActive = int8(isActive)
-	resupdate, err := ap.Update(newPegawai)
+	resupdate, err := pm.Update(newPegawai)
 	return resupdate, err
 }
