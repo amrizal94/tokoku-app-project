@@ -8,12 +8,29 @@ import (
 	"tokoku-app-project/pegawai"
 )
 
+var (
+	cfg         = config.ReadConfig()
+	conn        = config.ConnectSQL(*cfg)
+	PegawaiMenu = pegawai.NewPegawaiMenu(conn)
+)
+
+func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
+	arrPegawai, err := PegawaiMenu.Select(id, id_logged)
+	var strPegawai string
+	if err != nil {
+		fmt.Println(err.Error())
+		return arrPegawai, strPegawai, err
+	}
+	for _, v := range arrPegawai {
+		strPegawai += fmt.Sprintln("ID :", v.GetID(), v.GetNama())
+	}
+
+	return arrPegawai, strPegawai, err
+}
+
 func main() {
 	var (
-		cfg             = config.ReadConfig()
-		conn            = config.ConnectSQL(*cfg)
-		PegawaiMenu     = pegawai.NewPegawaiMenu(conn)
-		inputMenu   int = 1
+		inputMenu int = 1
 	)
 	for inputMenu != 0 {
 		fmt.Println("==========================")
@@ -45,6 +62,7 @@ func main() {
 					fmt.Println("==========================")
 					if isAdmin {
 						fmt.Println("1. Tambah Pegawai")
+						fmt.Println("2. Hapus Pegawai")
 					} else {
 						fmt.Println("1. Tambah Pelanggan")
 					}
@@ -69,17 +87,10 @@ func main() {
 							fmt.Print("Masukkan password : ")
 							fmt.Scanln(&tmp)
 							newPegawai.SetPassword(tmp)
-							isAdded, isActive, err := PegawaiMenu.Register(newPegawai)
+							newPegawai.SetIsActive(1)
+							isAdded, err := PegawaiMenu.Register(newPegawai)
 							if err != nil {
 								fmt.Println(err.Error())
-							} else {
-								if isActive > 0 {
-									isAdded, err = PegawaiMenu.Update(newPegawai.GetPassword(), newPegawai.GetNama(), int(newPegawai.GetIsActive()), isActive)
-									if err != nil {
-										fmt.Println(err.Error())
-									}
-								}
-
 							}
 							if isAdded {
 								fmt.Println("==========================")
@@ -98,6 +109,43 @@ func main() {
 							fmt.Print("Masukkan password : ")
 							fmt.Scanln(&tmp)
 							// newPegawai.SetPassword(tmp)
+						}
+					case 2:
+						if isAdmin {
+							deleteMode := true
+							for deleteMode {
+								_, strPegawai, err := listPegawai(0, resLogin.GetID())
+								if err != nil {
+									fmt.Println(err.Error())
+								}
+								if len(strPegawai) > 0 {
+									fmt.Println("==========================")
+									fmt.Println("HAPUS PEGAWAI")
+									fmt.Print(strPegawai)
+									fmt.Print("Masukkan ID pegawai / 0. Kembali halaman: ")
+									var inPegawaiID int
+									fmt.Scanln(&inPegawaiID)
+									if inPegawaiID == 0 {
+										deleteMode = !deleteMode
+										continue
+									}
+									isDeleted, err := PegawaiMenu.Delete(inPegawaiID, 0)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+									if isDeleted {
+										fmt.Println("==========================")
+										fmt.Println("berhasil menghapus kegiatan")
+									} else {
+										fmt.Println("==========================")
+										fmt.Println("gagal menghapus kegiatan")
+									}
+								} else {
+									fmt.Println("==========================")
+									fmt.Println("Kak", resLogin.GetNama(), "belum memiliki data pegawai satu pun")
+									deleteMode = !deleteMode
+								}
+							}
 						}
 					case 9:
 						isLogged = !isLogged
