@@ -9,14 +9,16 @@ import (
 	"tokoku-app-project/config"
 	"tokoku-app-project/pegawai"
 	"tokoku-app-project/pelanggan"
+	"tokoku-app-project/transaksibarang"
 )
 
 var (
-	cfg           = config.ReadConfig()
-	conn          = config.ConnectSQL(*cfg)
-	PegawaiMenu   = pegawai.NewPegawaiMenu(conn)
-	BarangMenu    = barang.NewBarangMenu(conn)
-	PelangganMenu = pelanggan.NewPelangganMenu(conn)
+	cfg                 = config.ReadConfig()
+	conn                = config.ConnectSQL(*cfg)
+	PegawaiMenu         = pegawai.NewPegawaiMenu(conn)
+	BarangMenu          = barang.NewBarangMenu(conn)
+	PelangganMenu       = pelanggan.NewPelangganMenu(conn)
+	TransaksibarangMenu = transaksibarang.NewTransaksibarangMenu(conn)
 )
 
 func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
@@ -100,11 +102,12 @@ func main() {
 						fmt.Println("2. Hapus Pegawai")
 						fmt.Println("3. Hapus Barang")
 						fmt.Println("4. Hapus Pelanggan")
+
 					} else {
 						fmt.Println("1. Tambah Pelanggan")
 						fmt.Println("2. Tambah Barang")
 						fmt.Println("3. Edit Barang")
-						fmt.Println("4. Nota Transaksi")
+						fmt.Println("4. Transaksi Barang")
 					}
 					fmt.Println("9. Log out")
 					fmt.Println("0. Exit")
@@ -346,7 +349,9 @@ func main() {
 							}
 
 						}
+
 					case 4:
+
 						if isAdmin {
 							deleteMode := true
 							for deleteMode {
@@ -382,6 +387,28 @@ func main() {
 									deleteMode = !deleteMode
 								}
 							}
+						} else {
+
+							var barcode, id_transaksi int
+
+							fmt.Println("==========================")
+							fmt.Println("TAMBAH TRANSAKSIBARANG")
+							fmt.Print("Masukkan barcode : ")
+							fmt.Scanln(&barcode)
+							fmt.Print("Masukkan nama Transaksibarang : ")
+							fmt.Scanln(&id_transaksi)
+							res, err := TransaksibarangMenu.Invite(barcode, id_transaksi)
+							if err != nil {
+								fmt.Println(err.Error())
+							}
+							if res {
+								fmt.Println("==========================")
+								fmt.Println("Sukses menambahkan Transaksibarang")
+							} else {
+								fmt.Println("==========================")
+								fmt.Println("Gagal menambahkan Transaksibarang")
+							}
+
 						}
 					case 9:
 						isLogged = !isLogged
