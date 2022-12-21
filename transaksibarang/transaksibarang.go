@@ -6,53 +6,84 @@ import (
 	"log"
 )
 
-type Transaksibarang struct {
-	transaksi_id int
-	barcode_id   int
+type TransaksiBarang struct {
+	id_transaksi int
+	nama         string
+	barcode      int
+	jumlah       int
+	harga        int
+	total        int
 }
 
-type TransaksibarangMenu struct {
+type TransaksiBarangMenu struct {
 	db *sql.DB
 }
 
-type TransaksibarangInterface interface {
-	Invite(barcode, id_transaksi int) (bool, error)
+type TransaksiBarangInterface interface {
+	Insert(newTransaksiBarang TransaksiBarang) (bool, error)
+	Select(id_transaksi int) ([]TransaksiBarang, error)
 }
 
-func NewTransaksibarangMenu(conn *sql.DB) TransaksibarangInterface {
-	return &TransaksibarangMenu{
+func NewTransaksiBarangMenu(conn *sql.DB) TransaksiBarangInterface {
+	return &TransaksiBarangMenu{
 		db: conn,
 	}
 }
 
-func (ua *Transaksibarang) TransaksiID(newUserID int) {
-	ua.transaksi_id = newUserID
+func (tb *TransaksiBarang) SetIDTransaksi(newIDTransaksi int) {
+	tb.id_transaksi = newIDTransaksi
 }
-func (ua *Transaksibarang) BarcodeID(newBarcodeIDID int) {
-	ua.barcode_id = newBarcodeIDID
+func (tb *TransaksiBarang) SetBarcode(newBarcode int) {
+	tb.barcode = newBarcode
+}
+func (tb *TransaksiBarang) SetJumlah(newJumlah int) {
+	tb.jumlah = newJumlah
+}
+func (tb *TransaksiBarang) SetNama(newNama string) {
+	tb.nama = newNama
+}
+func (tb *TransaksiBarang) SetTotal(newTotal int) {
+	tb.jumlah = newTotal
+}
+func (tb *TransaksiBarang) SetHarga(newHarga int) {
+	tb.harga = newHarga
 }
 
-func (ua *Transaksibarang) GetTransaksiID() int {
-	return ua.transaksi_id
+func (tb *TransaksiBarang) GetIDTransaksi() int {
+	return tb.id_transaksi
 }
-func (ua *Transaksibarang) GetBarcodeID() int {
-	return ua.transaksi_id
+func (tb *TransaksiBarang) GetBarcode() int {
+	return tb.barcode
 }
-func (ua *TransaksibarangMenu) Invite(transaksi_id, barcode_id int) (bool, error) {
-	inviteQry, err := ua.db.Prepare("INSERT INTO user_activities (transaksi_id, barcode_id, due_date) values (?, ?, now())")
+func (tb *TransaksiBarang) GetJumlah() int {
+	return tb.jumlah
+}
+func (tb *TransaksiBarang) GetNama() string {
+	return tb.nama
+}
+func (tb *TransaksiBarang) GetTotal() int {
+	return tb.total
+}
+func (tb *TransaksiBarang) GetHarga() int {
+	return tb.harga
+}
+
+func (tbm *TransaksiBarangMenu) Insert(newTransaksiBarang TransaksiBarang) (bool, error) {
+	insertQry, err := tbm.db.Prepare(`
+	INSERT INTO transaksi_barang (id_transaksi, barcode, jumlah) values (?,?,?)`)
 	if err != nil {
-		log.Println("prepare invite user transaksi ", err.Error())
-		return false, errors.New("prepare statement invite user transaksi error")
+		log.Println("prepare insert transaksi barang ", err.Error())
+		return false, errors.New("prepare statement insert transaksi barang error")
 	}
-	res, err := inviteQry.Exec(transaksi_id, barcode_id)
+	res, err := insertQry.Exec(newTransaksiBarang.id_transaksi, newTransaksiBarang.barcode, newTransaksiBarang.jumlah)
 	if err != nil {
-		log.Println("invite user transaksi ", err.Error())
-		return false, errors.New("invite user transaksi error")
+		log.Println("insert transaksi barang ", err.Error())
+		return false, errors.New("insert transaksi barang error")
 	}
 	affRows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("after insert user transaksi ", err.Error())
-		return false, errors.New("error setelah insert usertransaksi")
+		log.Println("after insert transaksi barang ", err.Error())
+		return false, errors.New("error setelah insert transaksi barang")
 	}
 	if affRows <= 0 {
 		log.Println("no record affected")
@@ -60,5 +91,27 @@ func (ua *TransaksibarangMenu) Invite(transaksi_id, barcode_id int) (bool, error
 	}
 
 	return true, nil
+}
 
+func (tbm *TransaksiBarangMenu) Select(id_transaksi int) ([]TransaksiBarang, error) {
+	selectTransaksiBarangQry, err := tbm.db.Query(`
+	SELECT b.nama, tb.jumlah, b.harga, tb.jumlah * b.harga 
+	FROM barang b 
+	JOIN transaksi_barang tb ON tb.barcode = b.barcode
+	WHERE tb.id_transaksi = ?;`, id_transaksi)
+	if err != nil {
+		log.Println("select transaksi barang", err.Error())
+		return nil, errors.New("select transaksi barang error")
+	}
+	arrtransaksibarang := []TransaksiBarang{}
+	for selectTransaksiBarangQry.Next() {
+		var tmp TransaksiBarang
+		err = selectTransaksiBarangQry.Scan(&tmp.nama, &tmp.jumlah, &tmp.harga, &tmp.total)
+		if err != nil {
+			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
+			return arrtransaksibarang, err
+		}
+		arrtransaksibarang = append(arrtransaksibarang, tmp)
+	}
+	return arrtransaksibarang, nil
 }

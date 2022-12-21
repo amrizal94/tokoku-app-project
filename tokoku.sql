@@ -109,7 +109,8 @@ SELECT * FROM transaksi_barang tb ;
 
 SELECT b.nama, tb.jumlah, b.harga, tb.jumlah * b.harga 
 FROM barang b 
-JOIN transaksi_barang tb ON tb.barcode = b.barcode;
+JOIN transaksi_barang tb ON tb.barcode = b.barcode
+WHERE tb.id_transaksi = 3;
 
 
 

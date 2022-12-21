@@ -7,10 +7,10 @@ import (
 	"strings"
 	"tokoku-app-project/barang"
 	"tokoku-app-project/config"
-	"tokoku-app-project/config/transaksibarang"
 	"tokoku-app-project/pegawai"
 	"tokoku-app-project/pelanggan"
 	"tokoku-app-project/transaksi"
+	"tokoku-app-project/transaksibarang"
 )
 
 var (
