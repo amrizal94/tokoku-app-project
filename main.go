@@ -133,6 +133,7 @@ func main() {
 						fmt.Println("2. Hapus Pegawai")
 						fmt.Println("3. Hapus Barang")
 						fmt.Println("4. Hapus Pelanggan")
+
 					} else {
 						fmt.Println("1. Tambah Pelanggan")
 						fmt.Println("2. Tambah Barang")
@@ -379,7 +380,9 @@ func main() {
 							}
 
 						}
+
 					case 4:
+
 						if isAdmin {
 							deleteMode := true
 							for deleteMode {
