@@ -18,6 +18,8 @@ type TransaksiMenu struct {
 }
 
 type TransaksiInterface interface {
+	Insert(newTransaksi Transaksi) (int, error)
+	Select(id int) ([]Transaksi, error)
 }
 
 func NewTransaksiMenu(conn *sql.DB) TransaksiInterface {
@@ -52,7 +54,6 @@ func (t *Transaksi) GetTanggal() string {
 }
 
 func (tm *TransaksiMenu) Insert(newTransaksi Transaksi) (int, error) {
-
 	insertQry, err := tm.db.Prepare(`
 	INSERT INTO transaksi (id_pegawai, hp, tanggal) values (?,?,now())`)
 	if err != nil {
@@ -75,4 +76,37 @@ func (tm *TransaksiMenu) Insert(newTransaksi Transaksi) (int, error) {
 	}
 	id, _ := res.LastInsertId()
 	return int(id), nil
+}
+
+func (tm *TransaksiMenu) Select(id int) ([]Transaksi, error) {
+	var (
+		selectTransaksiQry *sql.Rows
+		err                error
+	)
+	if id == 0 {
+		selectTransaksiQry, err = tm.db.Query(`
+		SELECT id_pegawai,hp,tanggal
+		FROM transaksi;`)
+	} else {
+		selectTransaksiQry, err = tm.db.Query(`
+		SELECT id_pegawai,hp,tanggal
+		FROM transaksi
+		WHERE id = ?;`, id)
+	}
+	if err != nil {
+		log.Println("select transaksi", err.Error())
+		return nil, errors.New("select transaksi error")
+	}
+
+	arrTransaksi := []Transaksi{}
+	for selectTransaksiQry.Next() {
+		var tmp Transaksi
+		err = selectTransaksiQry.Scan(&tmp.id_pegawai, &tmp.hp, &tmp.tanggal)
+		if err != nil {
+			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
+			return arrTransaksi, err
+		}
+		arrTransaksi = append(arrTransaksi, tmp)
+	}
+	return arrTransaksi, nil
 }

@@ -52,18 +52,25 @@ CREATE table transaksi_barang(
 desc pelanggan;
 desc pegawai;
 desc barang;
+desc transaksi;
+desc transaksi_barang ;
 
-ALTER TABLE tokoku.pegawai DROP COLUMN isActive;
 ALTER TABLE tokoku.pegawai ADD isActive BOOL DEFAULT false NOT NULL;
 ALTER TABLE tokoku.pegawai ADD nama varchar(255) NOT NULL;
 ALTER TABLE tokoku.pegawai MODIFY isActive BOOL DEFAULT false NOT NULL;
 ALTER TABLE tokoku.barang ADD harga int NOT NULL;
-
+ALTER TABLE tokoku.transaksi_barang ADD jumlah int NOT NULL;
 
 
 -- INSERT 
 INSERT into pegawai (username, password, nama, isActive) values ('admin', 'admin', 'Admin', '1');
-
+INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (3, 112, 2);
+INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (3, 113, 3);
+INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (3, 777, 4);
+INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (3, 887, 5);
+INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (3, 899, 6);
+INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (1, 899, 6);
+INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (1, 887, 6);
 -- UPDATE 
 UPDATE pegawai p
 SET nama = 'Admin'
@@ -73,16 +80,41 @@ UPDATE pegawai p
 SET isActive = 1
 WHERE p.id = 1;
 
+UPDATE barang SET stok = case
+when stok > 100 then stok - 100 
+else 0 end
+WHERE barcode  = 112;
+
+UPDATE barang
+SET stok = stok - 100 
+WHERE barcode = 112 and stok > 100;
+
 -- DELETE 
 DELETE FROM pegawai WHERE id = 2;
 
 
 -- SELECT 
 SELECT * FROM pegawai;
+
 SELECT * FROM barang;
+
 SELECT * FROM pelanggan p ;
+
 SELECT barcode,id_pegawai,nama,stok,harga
 FROM barang;
+
+SELECT * FROM transaksi t;
+
+SELECT * FROM transaksi_barang tb ;
+
+SELECT b.nama, tb.jumlah, b.harga, tb.jumlah * b.harga 
+FROM barang b 
+JOIN transaksi_barang tb ON tb.barcode = b.barcode;
+
+
+
+
+
 
 
 

@@ -7,16 +7,20 @@ import (
 	"strings"
 	"tokoku-app-project/barang"
 	"tokoku-app-project/config"
+	"tokoku-app-project/config/transaksibarang"
 	"tokoku-app-project/pegawai"
 	"tokoku-app-project/pelanggan"
+	"tokoku-app-project/transaksi"
 )
 
 var (
-	cfg           = config.ReadConfig()
-	conn          = config.ConnectSQL(*cfg)
-	PegawaiMenu   = pegawai.NewPegawaiMenu(conn)
-	BarangMenu    = barang.NewBarangMenu(conn)
-	PelangganMenu = pelanggan.NewPelangganMenu(conn)
+	cfg                 = config.ReadConfig()
+	conn                = config.ConnectSQL(*cfg)
+	PegawaiMenu         = pegawai.NewPegawaiMenu(conn)
+	BarangMenu          = barang.NewBarangMenu(conn)
+	PelangganMenu       = pelanggan.NewPelangganMenu(conn)
+	TransaksiMenu       = transaksi.NewTransaksiMenu(conn)
+	TransaksiBarangMenu = transaksibarang.NewTransaksiBarangMenu(conn)
 )
 
 func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
@@ -63,6 +67,35 @@ func listPelanggan(hp string) ([]pelanggan.Pelanggan, string, error) {
 	return arrPelanggan, strPelanggan, err
 }
 
+func listTransaksi(id int) ([]transaksi.Transaksi, string, error) {
+	arrTransaksi, err := TransaksiMenu.Select(id)
+
+	var strTransaksi string
+	if err != nil {
+		fmt.Println(err.Error())
+		return arrTransaksi, strTransaksi, err
+	}
+	for _, v := range arrTransaksi {
+		arrPegawai, _ := PegawaiMenu.Select(v.GetIDPegawai(), 0)
+		strTransaksi += fmt.Sprintf("ID: %d <%s>\n", v.GetID(), arrPegawai[0].GetNama())
+	}
+	return arrTransaksi, strTransaksi, err
+}
+
+func listTransaksiBarang(id int) ([]transaksibarang.TransaksiBarang, string, error) {
+	arrTransaksiBarang, err := TransaksiBarangMenu.Select(id)
+
+	var strTransaksiBarang string
+	if err != nil {
+		fmt.Println(err.Error())
+		return arrTransaksiBarang, strTransaksiBarang, err
+	}
+	for _, v := range arrTransaksiBarang {
+		strTransaksiBarang += fmt.Sprintf("%s %d x %d %d\n", v.GetNama(), v.GetJumlah(), v.GetHarga(), v.GetTotal())
+	}
+	return arrTransaksiBarang, strTransaksiBarang, err
+}
+
 func main() {
 	var (
 		inputMenu int = 1
@@ -104,7 +137,7 @@ func main() {
 						fmt.Println("1. Tambah Pelanggan")
 						fmt.Println("2. Tambah Barang")
 						fmt.Println("3. Edit Barang")
-						fmt.Println("4. Nota Transaksi")
+						fmt.Println("4. Transaksi")
 					}
 					fmt.Println("9. Log out")
 					fmt.Println("0. Exit")
@@ -382,6 +415,116 @@ func main() {
 									deleteMode = !deleteMode
 								}
 							}
+						} else {
+							transaksiMode := true
+							for transaksiMode {
+								_, strPelanggan, err := listPelanggan("0")
+								if err != nil {
+									fmt.Println(err.Error())
+									fmt.Println("harap masukkan data dengan benar")
+
+								}
+								if len(strPelanggan) > 0 {
+									var newTransaksi transaksi.Transaksi
+									fmt.Println("==========================")
+									fmt.Println("TRANSAKSI")
+									fmt.Println("Pilih pelanggan")
+									fmt.Print(strPelanggan)
+									fmt.Print("Masukkan no. hp / 0. Kembali halaman: ")
+									var inHP string
+									fmt.Scanln(&inHP)
+									newTransaksi.SetHP(inHP)
+									newTransaksi.SetIDPegawai(resLogin.GetID())
+									if inHP == "0" {
+										transaksiMode = !transaksiMode
+										continue
+									}
+									idInserted, err := TransaksiMenu.Insert(newTransaksi)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+									if idInserted > 0 {
+										arrTransaksi, strTransaksi, err := listTransaksi(idInserted)
+										if err != nil {
+											fmt.Println(err.Error())
+										}
+										if len(arrTransaksi) > 0 {
+											idx := strings.Index(strTransaksi, "<")
+											kasir := strTransaksi[idx+1 : len(strTransaksi)-2]
+
+											sellMode := true
+											for sellMode {
+												_, strTransaksiBarang, err := listTransaksiBarang(idInserted)
+												if err != nil {
+													fmt.Println(err.Error())
+												}
+												var inBarcode, inJumlah int
+												fmt.Println("==========================")
+												fmt.Println("TRANSAKSI")
+												fmt.Print("No. Transaksi\t:")
+												fmt.Println(idInserted)
+												fmt.Print("Waktu\t\t:")
+												fmt.Println(arrTransaksi[0].GetTanggal())
+												fmt.Print("Kasir\t\t:")
+												fmt.Printf("%d <%s>\n", arrTransaksi[0].GetIDPegawai(), kasir)
+												if len(strTransaksiBarang) > 0 {
+													fmt.Print(strTransaksiBarang)
+												} else {
+													fmt.Println("Belum ada barang yang dipilih")
+												}
+												_, strBarang, err := listBarang(0)
+												if err != nil {
+													fmt.Println(err.Error())
+												}
+												if len(strBarang) > 0 {
+													fmt.Println("==========================")
+													fmt.Println("Pilih BARANG")
+													fmt.Print(strBarang)
+													fmt.Print("Masukkan barcode / 0. Kembali halaman: ")
+													fmt.Scanln(&inBarcode)
+													if inBarcode == 0 {
+														sellMode = !sellMode
+														transaksiMode = !transaksiMode
+														continue
+													}
+													fmt.Print("Masukkan jumlah beli / 0. Kembali halaman: ")
+													fmt.Scanln(&inJumlah)
+													if inJumlah == 0 {
+														sellMode = !sellMode
+														transaksiMode = !transaksiMode
+														continue
+													}
+													isSell, err := BarangMenu.Sell(inBarcode, inJumlah)
+													if err != nil {
+														fmt.Println(err.Error())
+													}
+													if isSell {
+														var newTransaksiBarang transaksibarang.TransaksiBarang
+														newTransaksiBarang.SetIDTransaksi(idInserted)
+														newTransaksiBarang.SetBarcode(inBarcode)
+														newTransaksiBarang.SetJumlah(inJumlah)
+														isInserted, err := TransaksiBarangMenu.Insert(newTransaksiBarang)
+														if err != nil {
+															fmt.Println(err.Error())
+														}
+														if isInserted {
+															fmt.Println("Berhasil memasukkan barang ke transaksi")
+														} else {
+															fmt.Println("Gagal memasukkan barang ke transaksi")
+														}
+													} else {
+														fmt.Println("Gagal memasukkan barang ke transaksi, stok kurang")
+													}
+												}
+
+											}
+										}
+
+									}
+
+								}
+							}
+
 						}
 					case 9:
 						isLogged = !isLogged
