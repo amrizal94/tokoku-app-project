@@ -29,8 +29,11 @@ func main() {
 	)
 	for inputMenu != 0 {
 		fmt.Println("==========================")
+		fmt.Println("MENU")
+		fmt.Println()
 		fmt.Println("1. Login")
 		fmt.Println("0. Exit")
+		fmt.Println()
 		fmt.Print("Pilih menu : ")
 		fmt.Scanln(&inputMenu)
 		callClear()
@@ -598,67 +601,174 @@ func main() {
 										deleteMode = !deleteMode
 										continue
 									}
-									_, strTransaksiBarang, err := TransaksiBarangMenu.Data(inID)
+									arrTransaksi, _, err := TransaksiMenu.Data(inID)
 									if err != nil {
 										fmt.Println(err.Error())
 									}
-									var inHapus string
-									inChoice := true
-									amount, _ := TransaksiBarangMenu.Amount(inID)
-									for inChoice {
-										fmt.Println("==========================")
-										fmt.Println("HAPUS TRANSAKSI")
-										fmt.Println()
-										fmt.Print("No. Transaksi\t:")
-										fmt.Println(inID)
-										fmt.Print("Waktu\t\t:")
-										fmt.Println(arrTransaksi[0].GetTanggal())
-										fmt.Print("Kasir\t\t:")
-										fmt.Printf("%d <%s>\n", arrTransaksi[0].GetIDPegawai(), arrTransaksi[0].GetNamaPegawai())
-										fmt.Print("Pelanggan\t:")
-										fmt.Printf("%s <%s>\n", arrTransaksi[0].GetHP(), arrTransaksi[0].GetNamaPelanggan())
-										fmt.Println()
-										if len(strTransaksiBarang) > 0 {
-											fmt.Print(strTransaksiBarang)
-										} else {
-											fmt.Println("Belum ada barang yang dipilih")
-										}
-
+									if len(arrTransaksi) > 0 {
+										_, strTransaksiBarang, err := TransaksiBarangMenu.Data(inID)
 										if err != nil {
 											fmt.Println(err.Error())
 										}
-										fmt.Println()
-										fmt.Println("Total bayar : ", amount)
-										fmt.Println()
-										fmt.Print("Yakin ingin menghapus? (ya/tidak) : ")
-										fmt.Scanln(&inHapus)
-										inHapus = strings.ToLower(inHapus)
-										callClear()
-										fmt.Println("==========================")
-										if inHapus == "ya" {
-											isDeleted, err := TransaksiMenu.Delete(inID)
+										var inHapus string
+										inChoice := true
+										amount, _ := TransaksiBarangMenu.Amount(inID)
+										for inChoice {
+											fmt.Println("==========================")
+											fmt.Println("HAPUS TRANSAKSI")
+											fmt.Println()
+											fmt.Print("No. Transaksi\t:")
+											fmt.Println(inID)
+											fmt.Print("Waktu\t\t:")
+											fmt.Println(arrTransaksi[0].GetTanggal())
+											fmt.Print("Kasir\t\t:")
+											fmt.Printf("%d <%s>\n", arrTransaksi[0].GetIDPegawai(), arrTransaksi[0].GetNamaPegawai())
+											fmt.Print("Pelanggan\t:")
+											fmt.Printf("%s <%s>\n", arrTransaksi[0].GetHP(), arrTransaksi[0].GetNamaPelanggan())
+											fmt.Println()
+											if len(strTransaksiBarang) > 0 {
+												fmt.Print(strTransaksiBarang)
+											} else {
+												fmt.Println("Belum ada barang yang dipilih")
+											}
+
 											if err != nil {
 												fmt.Println(err.Error())
 											}
-											if isDeleted {
-												fmt.Println("berhasil menghapus transaksi")
-												inChoice = !inChoice
-											} else {
-												fmt.Println("gagal menghapus transaksi")
-												inChoice = !inChoice
-											}
-										} else if inHapus == "tidak" {
+											fmt.Println()
+											fmt.Println("Total bayar : ", amount)
+											fmt.Println()
+											fmt.Print("Yakin ingin menghapus? (ya/tidak) : ")
+											fmt.Scanln(&inHapus)
+											inHapus = strings.ToLower(inHapus)
 											callClear()
-											inChoice = !inChoice
-											continue
+											fmt.Println("==========================")
+											if inHapus == "ya" {
+												isDeleted, err := TransaksiMenu.Delete(inID)
+												if err != nil {
+													fmt.Println(err.Error())
+												}
+												if isDeleted {
+													fmt.Println("berhasil menghapus transaksi")
+													inChoice = !inChoice
+												} else {
+													fmt.Println("gagal menghapus transaksi")
+													inChoice = !inChoice
+												}
+											} else if inHapus == "tidak" {
+												callClear()
+												inChoice = !inChoice
+												continue
+											}
 										}
+									} else {
+										fmt.Println("==========================")
+										fmt.Println("Data tidak ditemukan")
 									}
 								}
 
 							}
 						} else {
-							fmt.Println("==========================")
-							fmt.Println("LIHAT TRANSAKSI")
+							viewMode := true
+							for viewMode {
+								var inID int
+								arrTransaksi, _, err := TransaksiMenu.Data(inID)
+								if err != nil {
+									fmt.Println(err.Error())
+								}
+								if len(arrTransaksi) > 0 {
+									fmt.Println("==========================")
+									fmt.Println("LIHAT TRANSAKSI")
+									fmt.Println()
+									fmt.Println("Pilih BARANG")
+									fmt.Println()
+									fmt.Println("ID Transaksi\t| Waktu\t\t\t| Kasir\t\t\t| Amount\t|\t Pelanggan")
+									fmt.Println()
+									for _, v := range arrTransaksi {
+										amount, _ := TransaksiBarangMenu.Amount(v.GetID())
+										tmp := amount
+										count := 0
+										for tmp > 0 {
+											tmp = tmp / 10
+											count++
+										}
+										count /= 6
+										tabAmount := strings.Repeat("\t", 2)
+										tabAmount = tabAmount[:len(tabAmount)-count]
+										fmt.Printf("%d\t\t| %s\t| %s\t| %d%s|%s\n", v.GetID(), v.GetTanggal(), v.GetNamaPegawai(), amount, tabAmount, v.GetNamaPelanggan())
+									}
+									fmt.Println()
+									fmt.Println("Pilih ID transaksi untuk detail lebih lanjut")
+									fmt.Print("Masukkan ID Transaksi / 0. Kembali : ")
+									fmt.Scanln(&inID)
+									callClear()
+									if inID == 0 {
+										callClear()
+										viewMode = !viewMode
+										continue
+									}
+									arrTransaksi, _, err := TransaksiMenu.Data(inID)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+									if len(arrTransaksi) > 0 {
+										_, strTransaksiBarang, err := TransaksiBarangMenu.Data(inID)
+										if err != nil {
+											fmt.Println(err.Error())
+										}
+										var tmp int
+										detailMode := true
+										amount, _ := TransaksiBarangMenu.Amount(inID)
+										for detailMode {
+											fmt.Println("==========================")
+											fmt.Println("HAPUS TRANSAKSI")
+											fmt.Println()
+											fmt.Print("No. Transaksi\t:")
+											fmt.Println(inID)
+											fmt.Print("Waktu\t\t:")
+											fmt.Println(arrTransaksi[0].GetTanggal())
+											fmt.Print("Kasir\t\t:")
+											fmt.Printf("%d <%s>\n", arrTransaksi[0].GetIDPegawai(), arrTransaksi[0].GetNamaPegawai())
+											fmt.Print("Pelanggan\t:")
+											fmt.Printf("%s <%s>\n", arrTransaksi[0].GetHP(), arrTransaksi[0].GetNamaPelanggan())
+											fmt.Println()
+											if len(strTransaksiBarang) > 0 {
+												fmt.Print(strTransaksiBarang)
+											} else {
+												fmt.Println("Belum ada barang yang dipilih")
+											}
+
+											if err != nil {
+												fmt.Println(err.Error())
+											}
+											fmt.Println()
+											fmt.Println("Total bayar : ", amount)
+											fmt.Println()
+											fmt.Println("==========================")
+											fmt.Println("MENU")
+											fmt.Println()
+											fmt.Println("9. Kembali")
+											fmt.Println("0. Halaman")
+											fmt.Println()
+											fmt.Print("Pilih menu : ")
+											fmt.Scanln(&tmp)
+											callClear()
+											if tmp == 9 {
+												detailMode = !detailMode
+												continue
+											}
+											if tmp == 0 {
+												detailMode = !detailMode
+												viewMode = !viewMode
+												continue
+											}
+										}
+									} else {
+										fmt.Println("==========================")
+										fmt.Println("Data tidak ditemukan")
+									}
+								}
+							}
 						}
 					case 9:
 						isLogged = !isLogged

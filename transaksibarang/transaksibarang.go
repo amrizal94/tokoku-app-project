@@ -186,9 +186,10 @@ func (tbm *TransaksiBarangMenu) Data(id_transaksi int) ([]TransaksiBarang, strin
 			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
 			return arrTransaksiBarang, strTransaksiBarang, err
 		}
+		kalibrasi := 8
 		tmpLen := len(tmp.GetNama())
-		tmpLen /= 6
-		tabNama := strings.Repeat("\t", 3)
+		tmpLen /= kalibrasi
+		tabNama := strings.Repeat("\t", 2)
 		tabNama = tabNama[:len(tabNama)-tmpLen]
 		strTransaksiBarang += fmt.Sprintf("%s%s %d x %d %d\n", tmp.GetNama(), tabNama, tmp.GetJumlah(), tmp.GetHarga(), tmp.GetTotal())
 		arrTransaksiBarang = append(arrTransaksiBarang, tmp)
