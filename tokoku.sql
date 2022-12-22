@@ -97,6 +97,8 @@ WHERE b.barcode = 899;
 
 -- DELETE 
 DELETE FROM pegawai WHERE id = 2;
+DELETE FROM barang
+WHERE barcode = 0;
 
 
 -- SELECT 
@@ -142,6 +144,12 @@ SELECT b.nama, tb.jumlah, b.harga, tb.jumlah * b.harga
 FROM barang b
 JOIN transaksi_barang tb ON tb.barcode = b.barcode 
 WHERE tb.id_transaksi = 1;
+
+SELECT t.id ,t.tanggal ,t.id_pegawai ,p.nama "Nama Pegawai" , t.hp ,p2.nama as "Nama Pelanggan"
+FROM transaksi t 
+JOIN pegawai p ON p.id = t.id_pegawai 
+JOIN pelanggan p2 ON p2.hp = t.hp;
+
 
 
 
