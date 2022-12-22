@@ -23,6 +23,7 @@ type PelangganInterface interface {
 	Register(newPelanggan Pelanggan) (bool, error)
 	Data(hp string) ([]Pelanggan, string, error)
 	Delete(hp string) (bool, error)
+	Duplicate(nomor_hp string) (bool, error)
 }
 
 func NewPelangganMenu(conn *sql.DB) PelangganInterface {
@@ -63,6 +64,8 @@ func (p *Pelanggan) GetIsActive() int8 {
 	return p.isActive
 }
 
+///// Menu untuk duplikat
+
 func (pm *PelangganMenu) Duplicate(nomer_hp string) (bool, error) {
 	res := pm.db.QueryRow(`
 	SELECT hp, isActive
@@ -82,6 +85,7 @@ func (pm *PelangganMenu) Duplicate(nomer_hp string) (bool, error) {
 	return false, nil
 }
 
+// ///// menu untuk register
 func (pm *PelangganMenu) Register(newPelanggan Pelanggan) (bool, error) {
 	registerQry, err := pm.db.Prepare(`
 	INSERT INTO pelanggan

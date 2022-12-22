@@ -108,6 +108,7 @@ func main() {
 					callClear()
 					switch inputMenu {
 					case 1:
+						///////// menu pegawai
 						if isAdmin {
 							var newPegawai pegawai.Pegawai
 							var tmp string
@@ -150,6 +151,7 @@ func main() {
 							} else {
 								fmt.Println("Gagal mendaftarn pegawai")
 							}
+							//////// menu pelanggan
 						} else {
 							var newPelanggan pelanggan.Pelanggan
 							var inHP string
@@ -187,6 +189,7 @@ func main() {
 								fmt.Println("Gagal mendaftarn pelanggan")
 							}
 						}
+						/////// menu pegawai
 					case 2:
 						if isAdmin {
 							deleteMode := true
@@ -226,6 +229,7 @@ func main() {
 									deleteMode = !deleteMode
 								}
 							}
+							//////menu barang
 						} else {
 							var newBarang barang.Barang
 							var tmp int
@@ -402,7 +406,7 @@ func main() {
 						}
 
 					case 4:
-
+						////// menu pelanggan
 						if isAdmin {
 							deleteMode := true
 							for deleteMode {

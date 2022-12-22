@@ -100,6 +100,7 @@ func (bm *BarangMenu) Duplicate(newBarang Barang) (bool, error) {
 	return false, nil
 }
 
+// ////menu regis
 func (bm *BarangMenu) Register(newBarang Barang) (bool, error) {
 	regiterQry, err := bm.db.Prepare(`
 	INSERT INTO barang
@@ -138,6 +139,7 @@ func (bm *BarangMenu) Register(newBarang Barang) (bool, error) {
 	return true, nil
 }
 
+// /// menu data
 func (bm *BarangMenu) Data(barcode int) ([]Barang, string, error) {
 	var (
 		selectBarangQry *sql.Rows
