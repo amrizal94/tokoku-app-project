@@ -37,36 +37,6 @@ func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
 	return arrPegawai, strPegawai, err
 }
 
-func listBarang(barcode int) ([]barang.Barang, string, error) {
-	arrBarang, err := BarangMenu.Select(barcode)
-
-	var strBarang string
-	if err != nil {
-		fmt.Println(err.Error())
-		return arrBarang, strBarang, err
-	}
-	for _, v := range arrBarang {
-		arrPegawai, _ := PegawaiMenu.Select(v.GetIDPegawai(), 0)
-		strBarang += fmt.Sprintf("Barcode: %d %s (%d) (%d) <%s>\n", v.GetBarcode(), v.GetNama(), v.GetStok(), v.GetHarga(), arrPegawai[0].GetNama())
-	}
-	return arrBarang, strBarang, err
-}
-
-func listPelanggan(hp string) ([]pelanggan.Pelanggan, string, error) {
-	arrPelanggan, err := PelangganMenu.Select(hp)
-
-	var strPelanggan string
-	if err != nil {
-		fmt.Println(err.Error())
-		return arrPelanggan, strPelanggan, err
-	}
-	for _, v := range arrPelanggan {
-		arrPegawai, _ := PegawaiMenu.Select(v.GetIDPegawai(), 0)
-		strPelanggan += fmt.Sprintf("HP: %s %s <%s>\n", v.GetHP(), v.GetNama(), arrPegawai[0].GetNama())
-	}
-	return arrPelanggan, strPelanggan, err
-}
-
 func listTransaksi(id int) ([]transaksi.Transaksi, string, error) {
 	arrTransaksi, err := TransaksiMenu.Select(id)
 
@@ -186,8 +156,8 @@ func main() {
 							fmt.Print("Masukkan nama : ")
 							nama, _ := reader.ReadString('\n')
 							nama = nama[:len(nama)-1]
-							newPelanggan.SetNama(nama)
-							isInserted, err := PelangganMenu.Insert(newPelanggan)
+							newPelanggan.SetNamaPelanggan(nama)
+							isInserted, err := PelangganMenu.Register(newPelanggan)
 							if err != nil {
 								fmt.Println(err.Error())
 							}
@@ -248,22 +218,22 @@ func main() {
 							fmt.Print("Masukkan nama barang : ")
 							nama, _ := reader.ReadString('\n')
 							nama = nama[:len(nama)-1]
-							newBarang.SetNama(nama)
+							newBarang.SetNamaBarang(nama)
 							fmt.Print("Masukkan stok : ")
 							fmt.Scanln(&tmp)
 							newBarang.SetStok(tmp)
 							fmt.Print("Masukkan harga : ")
 							fmt.Scanln(&tmp)
 							newBarang.SetHarga(tmp)
-							isAdded, err := BarangMenu.Insert(newBarang)
+							fmt.Println("==========================")
+							isAdded, err := BarangMenu.Register(newBarang)
 							if err != nil {
 								fmt.Println(err.Error())
+								continue
 							}
 							if isAdded {
-								fmt.Println("==========================")
 								fmt.Println("Sukses menambahkan barang")
 							} else {
-								fmt.Println("==========================")
 								fmt.Println("Gagal menambahkan barang")
 							}
 						}
@@ -271,7 +241,8 @@ func main() {
 						if isAdmin {
 							deleteMode := true
 							for deleteMode {
-								_, strBarang, err := listBarang(0)
+								var inBarcode int
+								_, strBarang, err := BarangMenu.Data(inBarcode)
 								if err != nil {
 									fmt.Println(err.Error())
 								}
@@ -280,7 +251,6 @@ func main() {
 									fmt.Println("HAPUS BARANG")
 									fmt.Print(strBarang)
 									fmt.Print("Masukkan barcode / 0. Kembali halaman: ")
-									var inBarcode int
 									fmt.Scanln(&inBarcode)
 									if inBarcode == 0 {
 										deleteMode = !deleteMode
@@ -306,7 +276,8 @@ func main() {
 						} else {
 							editMode := true
 							for editMode {
-								_, strBarang, err := listBarang(0)
+								var inBarcode int
+								_, strBarang, err := BarangMenu.Data(inBarcode)
 								if err != nil {
 									fmt.Println(err.Error())
 								}
@@ -315,13 +286,12 @@ func main() {
 									fmt.Println("EDIT BARANG")
 									fmt.Print(strBarang)
 									fmt.Print("Masukkan barcode / 0. Kembali halaman: ")
-									var inBarcode int
 									fmt.Scanln(&inBarcode)
 									if inBarcode == 0 {
 										editMode = !editMode
 										continue
 									}
-									arrBarang, strBarang, err := listBarang(inBarcode)
+									arrBarang, strBarang, err := BarangMenu.Data(inBarcode)
 									if err != nil {
 										fmt.Println(err.Error())
 									}
@@ -335,7 +305,7 @@ func main() {
 										fmt.Print("Barcode\t\t:")
 										fmt.Println(arrBarang[0].GetBarcode())
 										fmt.Print("Nama barang\t:")
-										fmt.Println(arrBarang[0].GetNama())
+										fmt.Println(arrBarang[0].GetNamaBarang())
 										fmt.Print("Stok\t\t:")
 										fmt.Println(arrBarang[0].GetStok())
 										fmt.Print("Harga\t\t:")
@@ -347,7 +317,7 @@ func main() {
 										nama, _ := reader.ReadString('\n')
 										nama = nama[:len(nama)-1]
 										if nama == "" {
-											nama = arrBarang[0].GetNama()
+											nama = arrBarang[0].GetNamaBarang()
 										}
 										fmt.Print("Masukkan stok barang : ")
 										fmt.Scanln(&inStok)
@@ -386,7 +356,8 @@ func main() {
 						if isAdmin {
 							deleteMode := true
 							for deleteMode {
-								_, strPelanggan, err := listPelanggan("0")
+								var nomer_pelanggan string
+								_, strPelanggan, err := PelangganMenu.Data(nomer_pelanggan)
 								if err != nil {
 									fmt.Println(err.Error())
 								}
@@ -421,7 +392,8 @@ func main() {
 						} else {
 							transaksiMode := true
 							for transaksiMode {
-								_, strPelanggan, err := listPelanggan("0")
+								var nomer_pelanggan string
+								_, strPelanggan, err := PelangganMenu.Data(nomer_pelanggan)
 								if err != nil {
 									fmt.Println(err.Error())
 									fmt.Println("harap masukkan data dengan benar")
@@ -475,7 +447,7 @@ func main() {
 												} else {
 													fmt.Println("Belum ada barang yang dipilih")
 												}
-												_, strBarang, err := listBarang(0)
+												_, strBarang, err := BarangMenu.Data(inBarcode)
 												if err != nil {
 													fmt.Println(err.Error())
 												}
@@ -483,6 +455,7 @@ func main() {
 													fmt.Println("==========================")
 													fmt.Println("Pilih BARANG")
 													fmt.Print(strBarang)
+													fmt.Println("==========================")
 													fmt.Print("Masukkan barcode / 0. Kembali halaman: ")
 													fmt.Scanln(&inBarcode)
 													if inBarcode == 0 {

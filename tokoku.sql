@@ -80,10 +80,6 @@ UPDATE pegawai p
 SET isActive = 1
 WHERE p.id = 1;
 
-UPDATE barang SET stok = case
-when stok > 100 then stok - 100 
-else 0 end
-WHERE barcode  = 112;
 
 UPDATE barang
 SET stok = stok - 100 
@@ -112,6 +108,14 @@ FROM barang b
 JOIN transaksi_barang tb ON tb.barcode = b.barcode
 WHERE tb.id_transaksi = 3;
 
+SELECT t.id, t.tanggal, t.id_pegawai, p.nama
+FROM transaksi t 
+JOIN pegawai p ON p.id = t.id_pegawai 
+
+SELECT b.nama, tb.jumlah, b.harga, tb.jumlah * b.harga 
+FROM barang b
+JOIN transaksi_barang tb ON tb.barcode = b.barcode 
+WHERE tb.id_transaksi = 1;
 
 
 

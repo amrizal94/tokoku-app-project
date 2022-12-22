@@ -3,14 +3,16 @@ package pelanggan
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
-	"strconv"
 )
 
 type Pelanggan struct {
-	hp         string
-	id_pegawai int
-	nama       string
+	hp             string
+	id_pegawai     int
+	nama_pelanggan string
+	nama_pegawai   string
+	isActive       int8
 }
 
 type PelangganMenu struct {
@@ -18,8 +20,8 @@ type PelangganMenu struct {
 }
 
 type PelangganInterface interface {
-	Insert(newPelanggan Pelanggan) (bool, error)
-	Select(hp string) ([]Pelanggan, error)
+	Register(newPelanggan Pelanggan) (bool, error)
+	Data(hp string) ([]Pelanggan, string, error)
 	Delete(hp string) (bool, error)
 }
 
@@ -32,11 +34,17 @@ func NewPelangganMenu(conn *sql.DB) PelangganInterface {
 func (p *Pelanggan) SetHP(newHP string) {
 	p.hp = newHP
 }
-func (p *Pelanggan) SetIDPegawai(newIDPegawai int) {
-	p.id_pegawai = newIDPegawai
+func (p *Pelanggan) SetIDPegawai(newID int) {
+	p.id_pegawai = newID
 }
-func (p *Pelanggan) SetNama(newNama string) {
-	p.nama = newNama
+func (p *Pelanggan) SetNamaPelanggan(newNama string) {
+	p.nama_pelanggan = newNama
+}
+func (p *Pelanggan) SetNamaPegawi(newNama string) {
+	p.nama_pegawai = newNama
+}
+func (p *Pelanggan) SetIsActive(newIsActive int8) {
+	p.isActive = newIsActive
 }
 
 func (p *Pelanggan) GetHP() string {
@@ -45,91 +53,142 @@ func (p *Pelanggan) GetHP() string {
 func (p *Pelanggan) GetIDPegawai() int {
 	return p.id_pegawai
 }
-func (p *Pelanggan) GetNama() string {
-	return p.nama
+func (p *Pelanggan) GetNamaPelanggan() string {
+	return p.nama_pelanggan
+}
+func (p *Pelanggan) GetNamaPegawai() string {
+	return p.nama_pegawai
+}
+func (p *Pelanggan) GetIsActive() int8 {
+	return p.isActive
 }
 
-func (pm *PelangganMenu) Insert(newPelanggan Pelanggan) (bool, error) {
-	insertQry, err := pm.db.Prepare(`
-	INSERT INTO pelanggan (hp, id_pegawai, nama) values (?,?,?)`)
-	if err != nil {
-		log.Println("prepare insert pelanggan ", err.Error())
-		return false, errors.New("prepare statement insert pelanggan error")
+func (pm *PelangganMenu) Duplicate(nomer_hp string) (bool, error) {
+	res := pm.db.QueryRow(`
+	SELECT hp, isActive
+	FROM pelanggan 
+	WHERE hp = ?
+	`, nomer_hp)
+	var tmp Pelanggan
+	if err := res.Scan(&tmp.hp, tmp.isActive); err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println("Result scan error", err.Error())
+			return false, err
+		}
 	}
-	res, err := insertQry.Exec(newPelanggan.hp, newPelanggan.id_pegawai, newPelanggan.nama)
+	if len(tmp.hp) > 0 && tmp.isActive == 1 {
+		return true, errors.New("nomer hp sudah digunakan")
+	}
+	return false, nil
+}
+
+func (pm *PelangganMenu) Register(newPelanggan Pelanggan) (bool, error) {
+	registerQry, err := pm.db.Prepare(`
+	INSERT INTO pelanggan
+	(hp, id_pegawai, nama, isActive) values (?,?,?,1);
+	`)
 	if err != nil {
-		log.Println("insert pelanggan ", err.Error())
-		return false, errors.New("insert pelanggan error")
+		log.Println("prepare register pelanggan ", err.Error())
+		return false, errors.New("prepare statement register pelanggan error")
+	}
+	isDuplicate, err := pm.Duplicate(newPelanggan.hp)
+	if err != nil {
+		log.Println("error duplicated information")
+		return false, err
+	}
+	if isDuplicate {
+		log.Println("duplicated information")
+		return false, err
+	}
+	res, err := registerQry.Exec(newPelanggan.hp, newPelanggan.id_pegawai, newPelanggan.nama_pelanggan)
+	if err != nil {
+		log.Println("register pelanggan", err.Error())
+		return false, errors.New("register pelanggan error")
 	}
 	affRows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("after insert pelanggan ", err.Error())
-		return false, errors.New("error setelah insert pelanggan")
+		log.Println("after register pelanggan", err.Error())
+		return false, errors.New("error setelah register pelanggan")
 	}
 	if affRows <= 0 {
 		log.Println("no record affected")
-		return false, errors.New("no record")
+		return true, errors.New("no record")
 	}
 	return true, nil
 }
 
-func (pm *PelangganMenu) Select(hp string) ([]Pelanggan, error) {
+func (pm *PelangganMenu) Data(nomer_hp string) ([]Pelanggan, string, error) {
 	var (
 		selectPelangganQry *sql.Rows
 		err                error
+		strPelanggan       string
 	)
-	intHP, err := strconv.Atoi(hp)
-	if err != nil {
-		log.Println("convert string to integer", err.Error())
-		return nil, errors.New("convert string to integer")
-	}
-	if intHP == 0 {
+	if len(nomer_hp) > 0 {
 		selectPelangganQry, err = pm.db.Query(`
-		SELECT hp,id_pegawai,nama
-		FROM pelanggan;`)
+		SELECT p.hp "Nomer HP", p.nama "Nama Pelanggan", p.id_pegawai "ID Pegawai", p2.nama "Nama Pegawai"  
+		FROM pelanggan p  
+		JOIN pegawai p2 ON p2.id = p.id_pegawai
+		WHERE p.hp = ?
+		AND p.isActive = 1;`, nomer_hp)
 	} else {
 		selectPelangganQry, err = pm.db.Query(`
-		SELECT hp,id_pegawai,nama
-		FROM pelanggan
-		WHERE hp = ?;`, intHP)
+		SELECT p.hp "Nomer HP", p.nama "Nama Pelanggan", p.id_pegawai "ID Pegawai", p2.nama "Nama Pegawai"  
+		FROM pelanggan p  
+		JOIN pegawai p2 ON p2.id = p.id_pegawai 
+		WHERE p.isActive = 1;`)
 	}
 	if err != nil {
-		log.Println("select pelanggan", err.Error())
-		return nil, errors.New("select pelanggan error")
+		log.Println("select query data pelanggan", err.Error())
+		return nil, strPelanggan, errors.New("select query data pelanggan error")
 	}
 
 	arrPelanggan := []Pelanggan{}
 	for selectPelangganQry.Next() {
 		var tmp Pelanggan
-		err = selectPelangganQry.Scan(&tmp.hp, &tmp.id_pegawai, &tmp.nama)
+		err = selectPelangganQry.Scan(&tmp.hp, &tmp.nama_pelanggan, &tmp.id_pegawai, &tmp.nama_pegawai)
 		if err != nil {
 			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
-			return arrPelanggan, err
+			return nil, strPelanggan, err
 		}
+		strPelanggan += fmt.Sprintf("HP: %s %s <%s>\n", tmp.hp, tmp.nama_pelanggan, tmp.nama_pegawai)
 		arrPelanggan = append(arrPelanggan, tmp)
 	}
-	return arrPelanggan, nil
+
+	return arrPelanggan, strPelanggan, nil
 }
 
-func (pm *PelangganMenu) Delete(hp string) (bool, error) {
-	deletePelangganQry, err := pm.db.Prepare("DELETE FROM pelanggan WHERE hp = ?;")
+func (pm *PelangganMenu) ChangeIsActive(nomer_hp string, isActive int8) (bool, error) {
+	updateQry, err := pm.db.Prepare(`
+	UPDATE pelanggan
+	SET isActive = ?
+	WHERE hp = ?;`)
 	if err != nil {
-		log.Println("prepare delete pelanggan ", err.Error())
-		return false, errors.New("prepare statement delete pelanggan error")
+		log.Println("prepare change isActive pelanggan", err.Error())
+		return false, errors.New("prepare statement change isActive error pelanggan")
+
 	}
-	res, err := deletePelangganQry.Exec(hp)
+	res, err := updateQry.Exec(isActive, nomer_hp)
 	if err != nil {
-		log.Println("delete pelanggan ", err.Error())
-		return false, errors.New("delete pelanggan error")
+		log.Println("update isActive pelanggan", err.Error())
+		return false, errors.New("update isActive pelanggan error")
 	}
-	affRows, err := res.RowsAffected()
+	affRow, err := res.RowsAffected()
 	if err != nil {
-		log.Println("after delete pelanggan ", err.Error())
-		return false, errors.New("error setelah delete pelanggan")
+		log.Println("after update isActive pelanggan ", err.Error())
+		return false, errors.New("error setelah update isActive pelanggan")
 	}
-	if affRows <= 0 {
+	if affRow <= 0 {
 		log.Println("no record affected")
 		return false, errors.New("no record")
 	}
 	return true, nil
+}
+
+func (pm *PelangganMenu) Delete(nomer_hp string) (bool, error) {
+	isChanged, err := pm.ChangeIsActive(nomer_hp, 0)
+	if err != nil {
+		return isChanged, err
+	}
+
+	return isChanged, nil
 }
