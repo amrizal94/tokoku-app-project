@@ -226,8 +226,8 @@ func (bm *BarangMenu) Sell(barcode int, jumlah int) (bool, error) {
 		return false, errors.New("error setelah update barang")
 	}
 	if affRow <= 0 {
-		log.Println("no record affected stok kurang")
-		return false, errors.New("no record stok kurang")
+		log.Println("no record affected barang")
+		return false, errors.New("no record barang")
 	}
 	return true, nil
 }

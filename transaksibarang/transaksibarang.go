@@ -13,6 +13,7 @@ type TransaksiBarang struct {
 	jumlah       int
 	harga        int
 	total        int
+	amount       int
 }
 
 type TransaksiBarangMenu struct {
@@ -22,6 +23,7 @@ type TransaksiBarangMenu struct {
 type TransaksiBarangInterface interface {
 	Insert(newTransaksiBarang TransaksiBarang) (bool, error)
 	Select(id_transaksi int) ([]TransaksiBarang, error)
+	Amount(id_transaksi int) (int, error)
 }
 
 func NewTransaksiBarangMenu(conn *sql.DB) TransaksiBarangInterface {
@@ -48,6 +50,9 @@ func (tb *TransaksiBarang) SetTotal(newTotal int) {
 func (tb *TransaksiBarang) SetHarga(newHarga int) {
 	tb.harga = newHarga
 }
+func (tb *TransaksiBarang) SetAmount(newAmount int) {
+	tb.amount = newAmount
+}
 
 func (tb *TransaksiBarang) GetIDTransaksi() int {
 	return tb.id_transaksi
@@ -66,6 +71,9 @@ func (tb *TransaksiBarang) GetTotal() int {
 }
 func (tb *TransaksiBarang) GetHarga() int {
 	return tb.harga
+}
+func (tb *TransaksiBarang) GetAmount() int {
+	return tb.amount
 }
 
 func (tbm *TransaksiBarangMenu) Duplicate(newTB TransaksiBarang) (bool, error) {
@@ -155,6 +163,10 @@ func (tbm *TransaksiBarangMenu) Insert(newTransaksiBarang TransaksiBarang) (bool
 }
 
 func (tbm *TransaksiBarangMenu) Select(id_transaksi int) ([]TransaksiBarang, error) {
+	var (
+		arrTransaksiBarang []TransaksiBarang
+	)
+
 	selectTransaksiBarangQry, err := tbm.db.Query(`
 	SELECT b.nama, tb.jumlah, b.harga, tb.jumlah * b.harga 
 	FROM barang b 
@@ -164,15 +176,34 @@ func (tbm *TransaksiBarangMenu) Select(id_transaksi int) ([]TransaksiBarang, err
 		log.Println("select transaksi barang", err.Error())
 		return nil, errors.New("select transaksi barang error")
 	}
-	arrtransaksibarang := []TransaksiBarang{}
 	for selectTransaksiBarangQry.Next() {
 		var tmp TransaksiBarang
 		err = selectTransaksiBarangQry.Scan(&tmp.nama, &tmp.jumlah, &tmp.harga, &tmp.total)
 		if err != nil {
 			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
-			return arrtransaksibarang, err
+			return arrTransaksiBarang, err
 		}
-		arrtransaksibarang = append(arrtransaksibarang, tmp)
+		arrTransaksiBarang = append(arrTransaksiBarang, tmp)
 	}
-	return arrtransaksibarang, nil
+	return arrTransaksiBarang, nil
+}
+
+func (tbm *TransaksiBarangMenu) Amount(id_transaksi int) (int, error) {
+	var amount int
+	amountQry := tbm.db.QueryRow(`
+	SELECT COALESCE(SUM(tb.jumlah * b.harga),0)  
+	FROM barang b 
+	JOIN transaksi_barang tb ON tb.barcode = b.barcode
+	WHERE tb.id_transaksi = ?;
+	`, id_transaksi)
+	switch err := amountQry.Scan(&amount); err {
+	case sql.ErrNoRows:
+		log.Println("No rows were returned!")
+		return amount, errors.New("no rows were returned")
+	case nil:
+		return amount, nil
+	default:
+		return amount, err
+	}
+
 }

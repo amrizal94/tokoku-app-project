@@ -3,6 +3,7 @@ package pegawai
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 )
 
@@ -22,7 +23,7 @@ type PegawaiInterface interface {
 	Login(username, password string) (Pegawai, error)
 	Register(newPegawai Pegawai) (bool, error)
 	Update(newPegawai Pegawai) (bool, error)
-	Select(id, id_logged int) ([]Pegawai, error)
+	Data(username string) ([]Pegawai, string, error)
 	Delete(id_pegawai int) (bool, error)
 }
 
@@ -203,31 +204,34 @@ func (pm *PegawaiMenu) Update(newPegawai Pegawai) (bool, error) {
 	return true, nil
 }
 
-func (pm *PegawaiMenu) Select(id, id_logged int) ([]Pegawai, error) {
+func (pm *PegawaiMenu) Data(username string) ([]Pegawai, string, error) {
 	var (
 		selectPegawaiQry *sql.Rows
 		err              error
 		cases            int8
+		strPegawai       string
 	)
-	if id == 0 && id_logged != 0 {
+	fmt.Println(username)
+	if username == "admin" {
 		// case 1 untuk memanggil list pegawai yg aktif kecuali admin
 		cases = 1
 		selectPegawaiQry, err = pm.db.Query(`
 		SELECT id, nama
 		FROM pegawai
-		WHERE id != ?
-		AND isActive = 1;`, id_logged)
-	} else if id != 0 && id_logged == 0 {
+		WHERE username != ?
+		AND isActive = 1;`, username)
+	} else {
 		// case 2 untuk memanggil data pegawai menurut idnya
 		cases = 2
 		selectPegawaiQry, err = pm.db.Query(`
 		SELECT username, password, nama
 		FROM pegawai
-		WHERE id = ?;`, id)
+		WHERE id = ?;`, username)
 	}
+
 	if err != nil {
 		log.Println("select pegawai", err.Error())
-		return nil, errors.New("select pegawai error")
+		return nil, strPegawai, errors.New("select pegawai error")
 	}
 	arrPegawai := []Pegawai{}
 	for selectPegawaiQry.Next() {
@@ -241,11 +245,12 @@ func (pm *PegawaiMenu) Select(id, id_logged int) ([]Pegawai, error) {
 
 		if err != nil {
 			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
-			return arrPegawai, err
+			return arrPegawai, strPegawai, err
 		}
+		strPegawai += fmt.Sprintf("%d\t| %s\n", tmp.id, tmp.nama)
 		arrPegawai = append(arrPegawai, tmp)
 	}
-	return arrPegawai, nil
+	return arrPegawai, strPegawai, nil
 }
 
 func (pm *PegawaiMenu) Delete(id_pegawai int) (bool, error) {

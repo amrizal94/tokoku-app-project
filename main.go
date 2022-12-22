@@ -24,20 +24,6 @@ var (
 	TransaksiBarangMenu = transaksibarang.NewTransaksiBarangMenu(conn)
 )
 
-func listPegawai(id, id_logged int) ([]pegawai.Pegawai, string, error) {
-	arrPegawai, err := PegawaiMenu.Select(id, id_logged)
-	var strPegawai string
-	if err != nil {
-		fmt.Println(err.Error())
-		return arrPegawai, strPegawai, err
-	}
-	for _, v := range arrPegawai {
-		strPegawai += fmt.Sprintln("ID :", v.GetID(), v.GetNama())
-	}
-
-	return arrPegawai, strPegawai, err
-}
-
 func listTransaksiBarang(id int) ([]transaksibarang.TransaksiBarang, string, error) {
 	arrTransaksiBarang, err := TransaksiBarangMenu.Select(id)
 
@@ -93,12 +79,13 @@ func main() {
 						fmt.Println("2. Hapus Pegawai")
 						fmt.Println("3. Hapus Barang")
 						fmt.Println("4. Hapus Pelanggan")
-
+						fmt.Println("5. Hapus Transaksi")
 					} else {
 						fmt.Println("1. Tambah Pelanggan")
 						fmt.Println("2. Tambah Barang")
 						fmt.Println("3. Edit Barang")
 						fmt.Println("4. Transaksi")
+						fmt.Println("5. Lihat Transaksi")
 					}
 					fmt.Println("9. Log out")
 					fmt.Println("0. Exit")
@@ -194,13 +181,15 @@ func main() {
 						if isAdmin {
 							deleteMode := true
 							for deleteMode {
-								_, strPegawai, err := listPegawai(0, resLogin.GetID())
+								_, strPegawai, err := PegawaiMenu.Data(resLogin.GetUsername())
 								if err != nil {
 									fmt.Println(err.Error())
 								}
 								if len(strPegawai) > 0 {
 									fmt.Println("==========================")
 									fmt.Println("HAPUS PEGAWAI")
+									fmt.Println()
+									fmt.Println("ID\t| Nama Pegawai")
 									fmt.Println()
 									fmt.Print(strPegawai)
 									fmt.Println()
@@ -326,6 +315,8 @@ func main() {
 									fmt.Println("==========================")
 									fmt.Println("EDIT BARANG")
 									fmt.Println()
+									fmt.Println("Barcode\t| Barang {Stok} [Harga] <Created By>")
+									fmt.Println()
 									fmt.Print(strBarang)
 									fmt.Println()
 									fmt.Print("Masukkan barcode / 0. Kembali : ")
@@ -420,6 +411,7 @@ func main() {
 									fmt.Println("HAPUS PELANGGAN")
 									fmt.Println()
 									fmt.Println("HP\t| Nama Pelanggan <Created By>")
+									fmt.Println()
 									fmt.Print(strPelanggan)
 									fmt.Println()
 									fmt.Print("Masukkan nomer hp / 0. Kembali: ")
@@ -466,6 +458,8 @@ func main() {
 									fmt.Println()
 									fmt.Println("Pilih pelanggan")
 									fmt.Println()
+									fmt.Println("HP\t| Nama Pelanggan <Created By>")
+									fmt.Println()
 									fmt.Print(strPelanggan)
 									fmt.Println()
 									fmt.Print("Masukkan no. hp / 0. Kembali : ")
@@ -474,7 +468,6 @@ func main() {
 									newTransaksi.SetHP(inHP)
 									newTransaksi.SetIDPegawai(resLogin.GetID())
 									callClear()
-									fmt.Println("==========================")
 									if inHP == "0" {
 										callClear()
 										transaksiMode = !transaksiMode
@@ -485,18 +478,19 @@ func main() {
 										fmt.Println(err.Error())
 									}
 									if idInserted > 0 {
-										arrTransaksi, _, err := TransaksiMenu.Select(idInserted)
+										arrTransaksi, _, err := TransaksiMenu.Data(idInserted)
 										if err != nil {
 											fmt.Println(err.Error())
 										}
 										if len(arrTransaksi) > 0 {
 											sellMode := true
 											for sellMode {
-												arrTransaksiBarang, strTransaksiBarang, err := listTransaksiBarang(idInserted)
+												_, strTransaksiBarang, err := listTransaksiBarang(idInserted)
 												if err != nil {
 													fmt.Println(err.Error())
 												}
-												var inBarcode, inJumlah, total int
+												var inBarcode, inJumlah int
+												fmt.Println("==========================")
 												fmt.Println("TRANSAKSI")
 												fmt.Println()
 												fmt.Print("No. Transaksi\t:")
@@ -514,10 +508,11 @@ func main() {
 													fmt.Println("Belum ada barang yang dipilih")
 												}
 												fmt.Println()
-												for _, v := range arrTransaksiBarang {
-													total += v.GetTotal()
+												amount, err := TransaksiBarangMenu.Amount(arrTransaksi[0].GetID())
+												if err != nil {
+													fmt.Println(err.Error())
 												}
-												fmt.Println("Total bayar : ", total)
+												fmt.Println("Total bayar : ", amount)
 												_, strBarang, err := BarangMenu.Data(inBarcode)
 												if err != nil {
 													fmt.Println(err.Error())
@@ -526,6 +521,8 @@ func main() {
 													fmt.Println()
 													fmt.Println("==========================")
 													fmt.Println("Pilih BARANG")
+													fmt.Println()
+													fmt.Println("Barcode\t| Barang {Stok} [Harga] <Created By>")
 													fmt.Println()
 													fmt.Print(strBarang)
 													fmt.Println()
@@ -563,7 +560,7 @@ func main() {
 															fmt.Println("Gagal memasukkan barang ke transaksi")
 														}
 													} else {
-														fmt.Println("Gagal memasukkan barang ke transaksi, stok kurang")
+														fmt.Println("Gagal memasukkan barang ke transaksi, barang tidak ada / stok kurang")
 													}
 												}
 
@@ -575,6 +572,38 @@ func main() {
 								}
 							}
 
+						}
+					case 5:
+						if isAdmin {
+							deleteMode := true
+							for deleteMode {
+								var inID int
+								_, strTransaksi, err := TransaksiMenu.Data(inID)
+								if err != nil {
+									fmt.Println(err.Error())
+								}
+								if len(strTransaksi) > 0 {
+									fmt.Println("==========================")
+									fmt.Println("HAPUS TRANSAKSI")
+									fmt.Println()
+									fmt.Println("Pilih BARANG")
+									fmt.Println()
+									fmt.Println("ID Transaksi\t| Waktu\t\t\t| Kasir\t\t\t| Pelanggan")
+									fmt.Println()
+									fmt.Println(strTransaksi)
+									fmt.Print("Masukkan ID Transaksi / 0. Kembali : ")
+									fmt.Scanln(&inID)
+									if inID == 0 {
+										callClear()
+										deleteMode = !deleteMode
+										continue
+									}
+								}
+
+							}
+						} else {
+							fmt.Println("==========================")
+							fmt.Println("LIHAT TRANSAKSI")
 						}
 					case 9:
 						isLogged = !isLogged

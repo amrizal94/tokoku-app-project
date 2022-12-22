@@ -22,7 +22,7 @@ type TransaksiMenu struct {
 
 type TransaksiInterface interface {
 	Insert(newTransaksi Transaksi) (int, error)
-	Select(id int) ([]Transaksi, string, error)
+	Data(id int) ([]Transaksi, string, error)
 }
 
 func NewTransaksiMenu(conn *sql.DB) TransaksiInterface {
@@ -93,7 +93,7 @@ func (tm *TransaksiMenu) Insert(newTransaksi Transaksi) (int, error) {
 	return int(id), nil
 }
 
-func (tm *TransaksiMenu) Select(id int) ([]Transaksi, string, error) {
+func (tm *TransaksiMenu) Data(id int) ([]Transaksi, string, error) {
 	var (
 		selectTransaksiQry *sql.Rows
 		err                error
@@ -101,13 +101,13 @@ func (tm *TransaksiMenu) Select(id int) ([]Transaksi, string, error) {
 	)
 	if id == 0 {
 		selectTransaksiQry, err = tm.db.Query(`
-		SELECT t.tanggal ,t.id_pegawai ,p.nama "Nama Pegawai" , t.hp ,p2.nama as "Nama Pelanggan"
+		SELECT t.id ,t.tanggal ,t.id_pegawai ,p.nama "Nama Pegawai" , t.hp ,p2.nama as "Nama Pelanggan"
 		FROM transaksi t 
 		JOIN pegawai p ON p.id = t.id_pegawai 
 		JOIN pelanggan p2 ON p2.hp = t.hp;`)
 	} else {
 		selectTransaksiQry, err = tm.db.Query(`
-		SELECT t.tanggal ,t.id_pegawai ,p.nama "Nama Pegawai" , t.hp ,p2.nama as "Nama Pelanggan"
+		SELECT t.id ,t.tanggal ,t.id_pegawai ,p.nama "Nama Pegawai" , t.hp ,p2.nama as "Nama Pelanggan"
 		FROM transaksi t 
 		JOIN pegawai p ON p.id = t.id_pegawai 
 		JOIN pelanggan p2 ON p2.hp = t.hp
@@ -121,12 +121,12 @@ func (tm *TransaksiMenu) Select(id int) ([]Transaksi, string, error) {
 	arrTransaksi := []Transaksi{}
 	for selectTransaksiQry.Next() {
 		var tmp Transaksi
-		err = selectTransaksiQry.Scan(&tmp.tanggal, &tmp.id_pegawai, &tmp.nama_pegawai, &tmp.hp, &tmp.nama_pelanggan)
+		err = selectTransaksiQry.Scan(&tmp.id, &tmp.tanggal, &tmp.id_pegawai, &tmp.nama_pegawai, &tmp.hp, &tmp.nama_pelanggan)
 		if err != nil {
 			log.Println("Loop through rows, using Scan to assign column data to struct fields selectTransaksiQry", err.Error())
 			return arrTransaksi, strTransaksi, err
 		}
-		strTransaksi += fmt.Sprintf("ID: %d <%s>\n", tmp.id, tmp.nama_pegawai)
+		strTransaksi += fmt.Sprintf("%d\t\t| %s\t| %s\t| %s\n", tmp.id, tmp.tanggal, tmp.nama_pegawai, tmp.nama_pelanggan)
 		arrTransaksi = append(arrTransaksi, tmp)
 	}
 	return arrTransaksi, strTransaksi, nil
