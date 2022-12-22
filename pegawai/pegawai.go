@@ -62,6 +62,7 @@ func (p *Pegawai) GetIsActive() int8 {
 	return p.isActive
 }
 
+// ////menu login
 func (pm *PegawaiMenu) Login(username, password string) (Pegawai, error) {
 	loginQry, err := pm.db.Prepare(`
 	SELECT id, nama
@@ -85,6 +86,7 @@ func (pm *PegawaiMenu) Login(username, password string) (Pegawai, error) {
 	return res, nil
 }
 
+// ///// menu duplicate
 func (pm *PegawaiMenu) Duplicate(username string) (int, int8) {
 	res := pm.db.QueryRow("SELECT id, isActive FROM pegawai where username = ?", username)
 	var tmp Pegawai
@@ -100,6 +102,7 @@ func (pm *PegawaiMenu) Duplicate(username string) (int, int8) {
 	return tmp.id, tmp.isActive
 }
 
+// ////menu register
 func (pm *PegawaiMenu) Register(newPegawai Pegawai) (bool, error) {
 	registerQry, err := pm.db.Prepare("INSERT INTO pegawai (username, password, nama, isActive) values (?,?,?,1)")
 	if err != nil {

@@ -79,6 +79,7 @@ func (b *Barang) GetIsActive() int8 {
 	return b.isActive
 }
 
+// ////// menu untuk duplikat
 func (bm *BarangMenu) Duplicate(barcode int) (bool, error) {
 	res := bm.db.QueryRow(`
 	SELECT barcode, isActive
@@ -98,6 +99,7 @@ func (bm *BarangMenu) Duplicate(barcode int) (bool, error) {
 	return false, nil
 }
 
+// ////menu regis
 func (bm *BarangMenu) Register(newBarang Barang) (bool, error) {
 	regiterQry, err := bm.db.Prepare(`
 	INSERT INTO barang
@@ -137,6 +139,7 @@ func (bm *BarangMenu) Register(newBarang Barang) (bool, error) {
 	return true, nil
 }
 
+// /// menu data
 func (bm *BarangMenu) Data(barcode int) ([]Barang, string, error) {
 	var (
 		selectBarangQry *sql.Rows
@@ -173,6 +176,7 @@ func (bm *BarangMenu) Data(barcode int) ([]Barang, string, error) {
 	return arrBarang, strBarang, nil
 }
 
+// ///menu untuk update
 func (bm *BarangMenu) Update(barcode int, nama string, stok int, harga int) (bool, error) {
 	updateQry, err := bm.db.Prepare(`
 	UPDATE barang
