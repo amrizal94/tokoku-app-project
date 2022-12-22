@@ -3,14 +3,17 @@ package transaksi
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 )
 
 type Transaksi struct {
-	id         int
-	id_pegawai int
-	hp         string
-	tanggal    string
+	id             int
+	id_pegawai     int
+	hp             string
+	nama_pegawai   string
+	nama_pelanggan string
+	tanggal        string
 }
 
 type TransaksiMenu struct {
@@ -19,7 +22,7 @@ type TransaksiMenu struct {
 
 type TransaksiInterface interface {
 	Insert(newTransaksi Transaksi) (int, error)
-	Select(id int) ([]Transaksi, error)
+	Select(id int) ([]Transaksi, string, error)
 }
 
 func NewTransaksiMenu(conn *sql.DB) TransaksiInterface {
@@ -40,6 +43,12 @@ func (t *Transaksi) SetHP(newHP string) {
 func (t *Transaksi) SetTanggal(newTanggal string) {
 	t.tanggal = newTanggal
 }
+func (t *Transaksi) SetNamaPegawai(newNama string) {
+	t.nama_pegawai = newNama
+}
+func (t *Transaksi) SetNamaPelanggan(newNama string) {
+	t.nama_pelanggan = newNama
+}
 func (t *Transaksi) GetID() int {
 	return t.id
 }
@@ -51,6 +60,12 @@ func (t *Transaksi) GetHP() string {
 }
 func (t *Transaksi) GetTanggal() string {
 	return t.tanggal
+}
+func (t *Transaksi) GetNamaPegawai() string {
+	return t.nama_pegawai
+}
+func (t *Transaksi) GetNamaPelanggan() string {
+	return t.nama_pelanggan
 }
 
 func (tm *TransaksiMenu) Insert(newTransaksi Transaksi) (int, error) {
@@ -78,35 +93,41 @@ func (tm *TransaksiMenu) Insert(newTransaksi Transaksi) (int, error) {
 	return int(id), nil
 }
 
-func (tm *TransaksiMenu) Select(id int) ([]Transaksi, error) {
+func (tm *TransaksiMenu) Select(id int) ([]Transaksi, string, error) {
 	var (
 		selectTransaksiQry *sql.Rows
 		err                error
+		strTransaksi       string
 	)
 	if id == 0 {
 		selectTransaksiQry, err = tm.db.Query(`
-		SELECT id_pegawai,hp,tanggal
-		FROM transaksi;`)
+		SELECT t.tanggal ,t.id_pegawai ,p.nama "Nama Pegawai" , t.hp ,p2.nama as "Nama Pelanggan"
+		FROM transaksi t 
+		JOIN pegawai p ON p.id = t.id_pegawai 
+		JOIN pelanggan p2 ON p2.hp = t.hp;`)
 	} else {
 		selectTransaksiQry, err = tm.db.Query(`
-		SELECT id_pegawai,hp,tanggal
-		FROM transaksi
-		WHERE id = ?;`, id)
+		SELECT t.tanggal ,t.id_pegawai ,p.nama "Nama Pegawai" , t.hp ,p2.nama as "Nama Pelanggan"
+		FROM transaksi t 
+		JOIN pegawai p ON p.id = t.id_pegawai 
+		JOIN pelanggan p2 ON p2.hp = t.hp
+		WHERE t.id = ?;`, id)
 	}
 	if err != nil {
 		log.Println("select transaksi", err.Error())
-		return nil, errors.New("select transaksi error")
+		return nil, strTransaksi, errors.New("select transaksi error")
 	}
 
 	arrTransaksi := []Transaksi{}
 	for selectTransaksiQry.Next() {
 		var tmp Transaksi
-		err = selectTransaksiQry.Scan(&tmp.id_pegawai, &tmp.hp, &tmp.tanggal)
+		err = selectTransaksiQry.Scan(&tmp.tanggal, &tmp.id_pegawai, &tmp.nama_pegawai, &tmp.hp, &tmp.nama_pelanggan)
 		if err != nil {
-			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
-			return arrTransaksi, err
+			log.Println("Loop through rows, using Scan to assign column data to struct fields selectTransaksiQry", err.Error())
+			return arrTransaksi, strTransaksi, err
 		}
+		strTransaksi += fmt.Sprintf("ID: %d <%s>\n", tmp.id, tmp.nama_pegawai)
 		arrTransaksi = append(arrTransaksi, tmp)
 	}
-	return arrTransaksi, nil
+	return arrTransaksi, strTransaksi, nil
 }

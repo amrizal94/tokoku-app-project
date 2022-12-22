@@ -68,9 +68,70 @@ func (tb *TransaksiBarang) GetHarga() int {
 	return tb.harga
 }
 
+func (tbm *TransaksiBarangMenu) Duplicate(newTB TransaksiBarang) (bool, error) {
+	res := tbm.db.QueryRow(`
+	SELECT id_transaksi, barcode
+	FROM transaksi_barang 
+	WHERE id_transaksi = ?
+	AND barcode = ?
+	`, newTB.id_transaksi, newTB.barcode)
+	var id_transaksi, barcode int
+	if err := res.Scan(&id_transaksi, &barcode); err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println("Result scan error", err.Error())
+			return false, err
+		}
+	}
+	if id_transaksi > 0 && barcode > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (tbm *TransaksiBarangMenu) Update(newTB TransaksiBarang) (bool, error) {
+	updateQry, err := tbm.db.Prepare(`
+	UPDATE transaksi_barang
+	SET jumlah = jumlah + ?
+	WHERE id_transaksi = ?
+	AND barcode = ?;`)
+	if err != nil {
+		log.Println("prepare update transaksi barang", err.Error())
+		return false, errors.New("prepare statement update transaksi barang error")
+	}
+	res, err := updateQry.Exec(newTB.jumlah, newTB.id_transaksi, newTB.barcode)
+	if err != nil {
+		log.Println("update transaksi barang", err.Error())
+		return false, errors.New("update transaksi barang error")
+	}
+	affRow, err := res.RowsAffected()
+	if err != nil {
+		log.Println("after update transaksi barang", err.Error())
+		return false, errors.New("error setelah update transaksi barang")
+	}
+	if affRow <= 0 {
+		log.Println("no record affected")
+		return false, errors.New("no record")
+	}
+	return true, nil
+}
+
 func (tbm *TransaksiBarangMenu) Insert(newTransaksiBarang TransaksiBarang) (bool, error) {
+	isDuplicate, err := tbm.Duplicate(newTransaksiBarang)
+	if err != nil {
+		log.Println("error duplicate transaksi barang", err.Error())
+		return false, errors.New("duplicate transaksi barang error")
+	}
+
+	if isDuplicate {
+		isUpdated, err := tbm.Update(newTransaksiBarang)
+		if err != nil {
+			return isUpdated, err
+		}
+
+		return isUpdated, err
+	}
 	insertQry, err := tbm.db.Prepare(`
-	INSERT INTO transaksi_barang (id_transaksi, barcode, jumlah) values (?,?,?)`)
+		INSERT INTO transaksi_barang (id_transaksi, barcode, jumlah) values (?,?,?)`)
 	if err != nil {
 		log.Println("prepare insert transaksi barang ", err.Error())
 		return false, errors.New("prepare statement insert transaksi barang error")

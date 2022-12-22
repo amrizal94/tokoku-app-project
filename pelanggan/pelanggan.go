@@ -150,7 +150,7 @@ func (pm *PelangganMenu) Data(nomer_hp string) ([]Pelanggan, string, error) {
 			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
 			return nil, strPelanggan, err
 		}
-		strPelanggan += fmt.Sprintf("HP: %s %s <%s>\n", tmp.hp, tmp.nama_pelanggan, tmp.nama_pegawai)
+		strPelanggan += fmt.Sprintf("%s\t| %s <%s>\n", tmp.hp, tmp.nama_pelanggan, tmp.nama_pegawai)
 		arrPelanggan = append(arrPelanggan, tmp)
 	}
 

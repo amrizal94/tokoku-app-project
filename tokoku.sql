@@ -58,7 +58,9 @@ desc transaksi_barang ;
 ALTER TABLE tokoku.pegawai ADD isActive BOOL DEFAULT false NOT NULL;
 ALTER TABLE tokoku.pegawai ADD nama varchar(255) NOT NULL;
 ALTER TABLE tokoku.pegawai MODIFY isActive BOOL DEFAULT false NOT NULL;
+ALTER TABLE tokoku.pelanggan ADD isActive BOOL DEFAULT false NOT NULL;
 ALTER TABLE tokoku.barang ADD harga int NOT NULL;
+ALTER TABLE tokoku.barang ADD isActive BOOL DEFAULT false NOT NULL;
 ALTER TABLE tokoku.transaksi_barang ADD jumlah int NOT NULL;
 
 
@@ -80,10 +82,18 @@ UPDATE pegawai p
 SET isActive = 1
 WHERE p.id = 1;
 
+UPDATE pelanggan  p
+SET isActive = 1
+WHERE p.hp = 08987;
+
 
 UPDATE barang
 SET stok = stok - 100 
 WHERE barcode = 112 and stok > 100;
+
+UPDATE barang  b
+SET b.isActive = 1
+WHERE b.barcode = 899;
 
 -- DELETE 
 DELETE FROM pegawai WHERE id = 2;
@@ -94,7 +104,23 @@ SELECT * FROM pegawai;
 
 SELECT * FROM barang;
 
+SELECT b.barcode ,b.id_pegawai ,b.nama ,b.stok ,b.harga ,p.nama 'nama pegawai'
+FROM barang b
+JOIN pegawai p ON p.id = b.id_pegawai;
+
 SELECT * FROM pelanggan p ;
+
+SELECT p.hp, p.nama, p.id_pegawai, p2.nama  
+		FROM pelanggan p  
+		JOIN pegawai p2 ON p2.id = p.id_pegawai
+		WHERE p.hp = 0811111
+		AND p.isActive = 1;
+
+SELECT p.hp, p.nama, p.id_pegawai, p2.nama  
+FROM pelanggan p  
+JOIN pegawai p2 ON p2.id = p.id_pegawai 
+WHERE p.isActive = 1;
+
 
 SELECT barcode,id_pegawai,nama,stok,harga
 FROM barang;

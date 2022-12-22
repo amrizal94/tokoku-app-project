@@ -21,11 +21,10 @@ type BarangMenu struct {
 }
 
 type BarangInterface interface {
-	Duplicate(barcode int) (bool, error)
 	Register(newBarang Barang) (bool, error)
 	Data(barcode int) ([]Barang, string, error)
 	Delete(barcode int) (bool, error)
-	Update(barcode int, nama string, stok int, harga int) (bool, error)
+	Update(upBarang Barang) (bool, error)
 	Sell(barcode int, jumlah int) (bool, error)
 }
 
@@ -44,7 +43,7 @@ func (b *Barang) SetIDPegawai(newID int) {
 func (b *Barang) SetNamaBarang(newNama string) {
 	b.nama_barang = newNama
 }
-func (b *Barang) SetNamaPegawi(newNama string) {
+func (b *Barang) SetNamaPegawai(newNama string) {
 	b.nama_pegawai = newNama
 }
 func (b *Barang) SetStok(newStok int) {
@@ -79,21 +78,24 @@ func (b *Barang) GetIsActive() int8 {
 	return b.isActive
 }
 
-func (bm *BarangMenu) Duplicate(barcode int) (bool, error) {
+func (bm *BarangMenu) Duplicate(newBarang Barang) (bool, error) {
 	res := bm.db.QueryRow(`
-	SELECT barcode, isActive
+	SELECT barcode isActive
 	FROM barang 
 	WHERE barcode = ?
-	`, barcode)
-	var tmp Barang
-	if err := res.Scan(&tmp.barcode, &tmp.isActive); err != nil {
+	`, newBarang.barcode)
+	var isActive int8
+	var barcode int
+	if err := res.Scan(&barcode, &isActive); err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			log.Println("Result scan error", err.Error())
 			return false, err
 		}
 	}
-	if barcode > 0 && tmp.isActive == 1 {
+	if isActive == 1 {
 		return true, errors.New("barcode sudah digunakan")
+	} else if barcode > 0 {
+		bm.Update(newBarang)
 	}
 	return false, nil
 }
@@ -107,9 +109,8 @@ func (bm *BarangMenu) Register(newBarang Barang) (bool, error) {
 		log.Println("prepare register barang ", err.Error())
 		return false, errors.New("prepare statement register barang error")
 	}
-	isDuplicate, err := bm.Duplicate(newBarang.barcode)
+	isDuplicate, err := bm.Duplicate(newBarang)
 	if err != nil {
-		log.Println("error duplicated information")
 		return false, err
 	}
 	if isDuplicate {
@@ -120,7 +121,7 @@ func (bm *BarangMenu) Register(newBarang Barang) (bool, error) {
 
 	if err != nil {
 		log.Println("register barang ", err.Error())
-		return false, errors.New("register barng error")
+		return false, errors.New("register barang error")
 	}
 
 	affRows, err := res.RowsAffected()
@@ -147,12 +148,15 @@ func (bm *BarangMenu) Data(barcode int) ([]Barang, string, error) {
 		selectBarangQry, err = bm.db.Query(`
 		SELECT b.barcode ,b.id_pegawai ,b.nama "Nama Barang" ,b.stok ,b.harga ,p.nama 'Nama Pegawai'
 		FROM barang b
-		JOIN pegawai p ON p.id = b.id_pegawai;`)
+		JOIN pegawai p ON p.id = b.id_pegawai
+		WHERE b.isActive = 1;`)
 	} else {
 		selectBarangQry, err = bm.db.Query(`
 		SELECT b.barcode ,b.id_pegawai ,b.nama "Nama Barang" ,b.stok ,b.harga ,p.nama 'Nama Pegawai'
-		FROM barang
-		WHERE barcode = ?;`, barcode)
+		FROM barang b
+		JOIN pegawai p ON p.id = b.id_pegawai
+		WHERE b.barcode = ?
+		AND b.isActive = 1;`, barcode)
 	}
 
 	if err != nil {
@@ -167,13 +171,13 @@ func (bm *BarangMenu) Data(barcode int) ([]Barang, string, error) {
 			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
 			return arrBarang, strBarang, err
 		}
-		strBarang += fmt.Sprintf("Barcode: %d %s (%d) (%d) <%s>\n", tmp.barcode, tmp.nama_barang, tmp.stok, tmp.harga, tmp.nama_pegawai)
+		strBarang += fmt.Sprintf("%d\t| %s {%d} [%d] <%s>\n", tmp.barcode, tmp.nama_barang, tmp.stok, tmp.harga, tmp.nama_pegawai)
 		arrBarang = append(arrBarang, tmp)
 	}
 	return arrBarang, strBarang, nil
 }
 
-func (bm *BarangMenu) Update(barcode int, nama string, stok int, harga int) (bool, error) {
+func (bm *BarangMenu) Update(upBarang Barang) (bool, error) {
 	updateQry, err := bm.db.Prepare(`
 	UPDATE barang
 	SET nama = ?, stok = ?, harga = ?
@@ -182,7 +186,7 @@ func (bm *BarangMenu) Update(barcode int, nama string, stok int, harga int) (boo
 		log.Println("prepare update barang", err.Error())
 		return false, errors.New("prepare statement update barang error")
 	}
-	res, err := updateQry.Exec(nama, stok, harga, barcode)
+	res, err := updateQry.Exec(upBarang.nama_barang, upBarang.stok, upBarang.harga, upBarang.barcode)
 	if err != nil {
 		log.Println("update barang ", err.Error())
 		return false, errors.New("update barang error")
@@ -203,7 +207,8 @@ func (bm *BarangMenu) Sell(barcode int, jumlah int) (bool, error) {
 	updateQry, err := bm.db.Prepare(`
 	UPDATE barang
 	SET stok = stok - ? 
-	WHERE barcode = ? and stok > ?;`)
+	WHERE barcode = ?
+	AND stok > ?;`)
 	if err != nil {
 		log.Println("prepare update barang", err.Error())
 		return false, errors.New("prepare statement update barang error")
@@ -257,5 +262,5 @@ func (bm *BarangMenu) Delete(barcode int) (bool, error) {
 		return isChanged, err
 	}
 
-	return isChanged, nil
+	return isChanged, err
 }

@@ -21,10 +21,9 @@ type PegawaiMenu struct {
 type PegawaiInterface interface {
 	Login(username, password string) (Pegawai, error)
 	Register(newPegawai Pegawai) (bool, error)
-	Duplicate(username string) (int, int8)
 	Update(newPegawai Pegawai) (bool, error)
 	Select(id, id_logged int) ([]Pegawai, error)
-	Delete(id, isActive int) (bool, error)
+	Delete(id_pegawai int) (bool, error)
 }
 
 func NewPegawaiMenu(conn *sql.DB) PegawaiInterface {
@@ -63,41 +62,76 @@ func (p *Pegawai) GetIsActive() int8 {
 }
 
 func (pm *PegawaiMenu) Login(username, password string) (Pegawai, error) {
+	var (
+		row *sql.Row
+		res Pegawai
+	)
+
+	usernameQry, err := pm.db.Prepare(`
+	SELECT id, nama
+	FROM pegawai
+	WHERE username = ? 
+	AND isActive = 1;`)
+	if err != nil {
+		log.Println("prepare usernameQry pegawai ", err.Error())
+		return Pegawai{}, errors.New("prepare statement usernameQry pegawai error")
+	}
+	row = usernameQry.QueryRow(username)
+	if row.Err() != nil {
+		log.Println("username query ", row.Err().Error())
+		return Pegawai{}, errors.New("select username pegawai error")
+	}
+
+	if err := row.Scan(&res.id, &res.nama); err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println("after login query")
+			return Pegawai{}, err
+		}
+		return Pegawai{}, errors.New("username belum terdaftar")
+	}
+
 	loginQry, err := pm.db.Prepare(`
 	SELECT id, nama
 	FROM pegawai
-	WHERE username = ? and password = ? and isActive = 1;`)
+	WHERE username = ? and password = ? 
+	AND isActive = 1;`)
 	if err != nil {
-		log.Println("prepare login pegawai ", err.Error())
-		return Pegawai{}, errors.New("prepare statement login pegawai error")
+		log.Println("prepare loginQry pegawai ", err.Error())
+		return Pegawai{}, errors.New("prepare statement loginQry pegawai error")
 	}
-	row := loginQry.QueryRow(username, password)
+	row = loginQry.QueryRow(username, password)
 	if row.Err() != nil {
 		log.Println("login query ", row.Err().Error())
 		return Pegawai{}, errors.New("select pegawai error")
 	}
-	res := Pegawai{}
 	if err := row.Scan(&res.id, &res.nama); err != nil {
-		log.Println("after login query", err.Error())
-		return Pegawai{}, errors.New("username atau password salah")
+		if err.Error() != "sql: no rows in result set" {
+			log.Println("after login query")
+			return Pegawai{}, err
+		}
+		return Pegawai{}, errors.New("password salah")
 	}
 	res.username = username
 	return res, nil
 }
 
-func (pm *PegawaiMenu) Duplicate(username string) (int, int8) {
-	res := pm.db.QueryRow("SELECT id, isActive FROM pegawai where username = ?", username)
-	var tmp Pegawai
-	if err := res.Scan(&tmp.id, &tmp.isActive); err != nil {
+func (pm *PegawaiMenu) Duplicate(username string) (bool, error) {
+	res := pm.db.QueryRow(`
+	SELECT isActive
+	FROM pegawai
+	WHERE username = ?
+	`, username)
+	var isActive int8
+	if err := res.Scan(&isActive); err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			log.Println("Result scan error", err.Error())
-			return tmp.id, 1
+			return false, err
 		}
 	}
-	if tmp.id > 0 {
-		return tmp.id, tmp.isActive
+	if isActive == 1 {
+		return true, nil
 	}
-	return tmp.id, tmp.isActive
+	return false, nil
 }
 
 func (pm *PegawaiMenu) Register(newPegawai Pegawai) (bool, error) {
@@ -106,77 +140,49 @@ func (pm *PegawaiMenu) Register(newPegawai Pegawai) (bool, error) {
 		log.Println("prepare insert pegawai registerQry", err.Error())
 		return false, errors.New("prepare statement insert pegawai error registerQry")
 	}
-	idRegistered, isActive := pm.Duplicate(newPegawai.username)
-	if idRegistered > 0 {
-		if isActive > 0 {
-			log.Println("duplicated information registerQry")
-			return false, errors.New("username sudah digunakan registerQry")
-		} else {
-			newPegawai.id = idRegistered
-			res, err := pm.Update(newPegawai)
-
-			return res, err
-		}
-
+	isDuplicate, err := pm.Duplicate(newPegawai.username)
+	if err != nil {
+		return false, err
+	}
+	if isDuplicate {
+		log.Println("duplicated information")
+		return false, err
 	}
 
 	// menjalankan query dengan parameter tertentu
 	res, err := registerQry.Exec(newPegawai.username, newPegawai.password, newPegawai.nama)
 	if err != nil {
-		log.Println("insert pegawai registerQry ", err.Error())
-		return false, errors.New("insert pegawai error registerQry")
+		log.Println("register pegawai ", err.Error())
+		return false, errors.New("register pegawai error")
 	}
 	// Cek berapa baris yang terpengaruh query diatas
 	affRows, err := res.RowsAffected()
 	if err != nil {
-		log.Println("after insert username registerQry ", err.Error())
-		return false, errors.New("error setelah insert registerQry")
+		log.Println("after register pegawai ", err.Error())
+		return false, errors.New("error setelah register pegawai")
 	}
 
 	if affRows <= 0 {
-		log.Println("no record affected registerQry")
-		return true, errors.New("no record registerQry")
+		log.Println("no record affected")
+		return false, errors.New("no record")
 	}
 
 	return true, nil
 }
 func (pm *PegawaiMenu) Update(newPegawai Pegawai) (bool, error) {
-
-	resSelect, err := pm.Select(newPegawai.id, 0)
-	if err != nil {
-		log.Println("res Select")
-		return false, errors.New("data pegawai tidak ada")
-	}
-	if newPegawai.password == "" {
-		newPegawai.password = resSelect[0].password
-	}
-	if newPegawai.nama == "" {
-		newPegawai.nama = resSelect[0].nama
-	}
-
 	updateQry, err := pm.db.Prepare(`
 	UPDATE pegawai
-	SET password = ?, nama = ?, isActive = ?
-	WHERE id = ?;`)
+	SET password = ?, nama = ?
+	WHERE username = ?;`)
 	if err != nil {
-		if newPegawai.isActive == 0 {
-			log.Println("prepare insert pegawai updateQry", err.Error())
-			return false, errors.New("prepare statement insert pegawai error updateQry")
-		} else {
-			log.Println("prepare change password pegawai ", err.Error())
-			return false, errors.New("prepare statement change password pegawai error updateQry")
-		}
+		log.Println("prepare updateQry pegawai", err.Error())
+		return false, errors.New("prepare statement updateQry pegawai error")
 	}
 
-	res, err := updateQry.Exec(newPegawai.password, newPegawai.nama, newPegawai.isActive, newPegawai.id)
+	res, err := updateQry.Exec(newPegawai.password, newPegawai.nama, newPegawai.username)
 	if err != nil {
-		if newPegawai.isActive == 0 {
-			log.Println("insert pegawai updateQry", err.Error())
-			return false, errors.New("insert pegawai error")
-		} else {
-			log.Println("update password ", err.Error())
-			return false, errors.New("update password error")
-		}
+		log.Println("update pegawai ", err.Error())
+		return false, errors.New("update pegawai error")
 	}
 	affRow, err := res.RowsAffected()
 	if err != nil {
@@ -240,10 +246,33 @@ func (pm *PegawaiMenu) Select(id, id_logged int) ([]Pegawai, error) {
 	return arrPegawai, nil
 }
 
-func (pm *PegawaiMenu) Delete(id, isActive int) (bool, error) {
-	newPegawai := Pegawai{}
-	newPegawai.id = id
-	newPegawai.isActive = int8(isActive)
-	resupdate, err := pm.Update(newPegawai)
-	return resupdate, err
+func (pm *PegawaiMenu) Delete(id_pegawai int) (bool, error) {
+	isDeleted, err := pm.ChangeIsActive(id_pegawai, 0)
+	return isDeleted, err
+}
+
+func (pm *PegawaiMenu) ChangeIsActive(id_pegawai int, isActive int8) (bool, error) {
+	updateQry, err := pm.db.Prepare(`
+	UPDATE pegawai
+	SET isActive = ?
+	WHERE id = ?;`)
+	if err != nil {
+		log.Println("prepare change isActive pegawai", err.Error())
+		return false, errors.New("prepare statement change isActive error pegawai")
+	}
+	res, err := updateQry.Exec(isActive, id_pegawai)
+	if err != nil {
+		log.Println("update isActive pegawai", err.Error())
+		return false, errors.New("update isActive pegawai error")
+	}
+	affRow, err := res.RowsAffected()
+	if err != nil {
+		log.Println("after update isActive pegawai ", err.Error())
+		return false, errors.New("error setelah update isActive pegawai")
+	}
+	if affRow <= 0 {
+		log.Println("no record affected")
+		return false, errors.New("no record")
+	}
+	return true, nil
 }
