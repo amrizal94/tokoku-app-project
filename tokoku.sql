@@ -57,7 +57,6 @@ desc transaksi_barang ;
 
 ALTER TABLE tokoku.pegawai ADD isActive BOOL DEFAULT false NOT NULL;
 ALTER TABLE tokoku.pegawai ADD nama varchar(255) NOT NULL;
-ALTER TABLE tokoku.pegawai MODIFY isActive BOOL DEFAULT false NOT NULL;
 ALTER TABLE tokoku.pelanggan ADD isActive BOOL DEFAULT false NOT NULL;
 ALTER TABLE tokoku.barang ADD harga int NOT NULL;
 ALTER TABLE tokoku.barang ADD isActive BOOL DEFAULT false NOT NULL;
@@ -73,6 +72,7 @@ INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (3, 887, 5);
 INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (3, 899, 6);
 INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (1, 899, 6);
 INSERT into transaksi_barang (id_transaksi, barcode, jumlah) values (1, 887, 6);
+INSERT INTO pegawai (username, password, nama) values ('admin2', 'admin2', 'Admin2');
 -- UPDATE 
 UPDATE pegawai p
 SET nama = 'Admin'
@@ -80,7 +80,7 @@ WHERE p.id = 1;
 
 UPDATE pegawai p
 SET isActive = 1
-WHERE p.id = 1;
+WHERE p.id = 13;
 
 UPDATE pelanggan  p
 SET isActive = 1
@@ -88,7 +88,7 @@ WHERE p.hp = 08987;
 
 
 UPDATE barang
-SET stok = stok - 100 
+SET stok = stok - 100
 WHERE barcode = 112 and stok > 100;
 
 UPDATE barang  b

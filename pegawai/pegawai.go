@@ -19,6 +19,7 @@ type PegawaiMenu struct {
 	db *sql.DB
 }
 
+// Buat manggil ke main
 type PegawaiInterface interface {
 	Login(username, password string) (Pegawai, error)
 	Register(newPegawai Pegawai) (bool, error)
@@ -95,7 +96,8 @@ func (pm *PegawaiMenu) Login(username, password string) (Pegawai, error) {
 	loginQry, err := pm.db.Prepare(`
 	SELECT id, nama
 	FROM pegawai
-	WHERE username = ? and password = ? 
+	WHERE username = ? 
+	AND password = ? 
 	AND isActive = 1;`)
 	if err != nil {
 		log.Println("prepare loginQry pegawai ", err.Error())

@@ -3,7 +3,9 @@ package transaksibarang
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
+	"strings"
 )
 
 type TransaksiBarang struct {
@@ -22,7 +24,7 @@ type TransaksiBarangMenu struct {
 
 type TransaksiBarangInterface interface {
 	Insert(newTransaksiBarang TransaksiBarang) (bool, error)
-	Select(id_transaksi int) ([]TransaksiBarang, error)
+	Data(id_transaksi int) ([]TransaksiBarang, string, error)
 	Amount(id_transaksi int) (int, error)
 }
 
@@ -162,9 +164,10 @@ func (tbm *TransaksiBarangMenu) Insert(newTransaksiBarang TransaksiBarang) (bool
 	return true, nil
 }
 
-func (tbm *TransaksiBarangMenu) Select(id_transaksi int) ([]TransaksiBarang, error) {
+func (tbm *TransaksiBarangMenu) Data(id_transaksi int) ([]TransaksiBarang, string, error) {
 	var (
 		arrTransaksiBarang []TransaksiBarang
+		strTransaksiBarang string
 	)
 
 	selectTransaksiBarangQry, err := tbm.db.Query(`
@@ -174,18 +177,23 @@ func (tbm *TransaksiBarangMenu) Select(id_transaksi int) ([]TransaksiBarang, err
 	WHERE tb.id_transaksi = ?;`, id_transaksi)
 	if err != nil {
 		log.Println("select transaksi barang", err.Error())
-		return nil, errors.New("select transaksi barang error")
+		return nil, strTransaksiBarang, errors.New("select transaksi barang error")
 	}
 	for selectTransaksiBarangQry.Next() {
 		var tmp TransaksiBarang
 		err = selectTransaksiBarangQry.Scan(&tmp.nama, &tmp.jumlah, &tmp.harga, &tmp.total)
 		if err != nil {
 			log.Println("Loop through rows, using Scan to assign column data to struct fields", err.Error())
-			return arrTransaksiBarang, err
+			return arrTransaksiBarang, strTransaksiBarang, err
 		}
+		tmpLen := len(tmp.GetNama())
+		tmpLen /= 6
+		tabNama := strings.Repeat("\t", 3)
+		tabNama = tabNama[:len(tabNama)-tmpLen]
+		strTransaksiBarang += fmt.Sprintf("%s%s %d x %d %d\n", tmp.GetNama(), tabNama, tmp.GetJumlah(), tmp.GetHarga(), tmp.GetTotal())
 		arrTransaksiBarang = append(arrTransaksiBarang, tmp)
 	}
-	return arrTransaksiBarang, nil
+	return arrTransaksiBarang, strTransaksiBarang, nil
 }
 
 func (tbm *TransaksiBarangMenu) Amount(id_transaksi int) (int, error) {

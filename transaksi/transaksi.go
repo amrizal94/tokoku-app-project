@@ -23,6 +23,7 @@ type TransaksiMenu struct {
 type TransaksiInterface interface {
 	Insert(newTransaksi Transaksi) (int, error)
 	Data(id int) ([]Transaksi, string, error)
+	Delete(id_transaksi int) (bool, error)
 }
 
 func NewTransaksiMenu(conn *sql.DB) TransaksiInterface {
@@ -130,4 +131,31 @@ func (tm *TransaksiMenu) Data(id int) ([]Transaksi, string, error) {
 		arrTransaksi = append(arrTransaksi, tmp)
 	}
 	return arrTransaksi, strTransaksi, nil
+}
+
+func (tm *TransaksiMenu) Delete(id_transaksi int) (bool, error) {
+	deleteQry, err := tm.db.Prepare(`
+	DELETE FROM transaksi 
+	WHERE id = ?;
+	`)
+	if err != nil {
+		log.Println("prepare delete transaksi ", err.Error())
+		return false, errors.New("prepare statement delete transaksi error")
+	}
+	res, err := deleteQry.Exec(id_transaksi)
+	if err != nil {
+		log.Println("delete transaksi ", err.Error())
+		return false, errors.New("delete transaksi error")
+	}
+	affRows, err := res.RowsAffected()
+	if err != nil {
+		log.Println("after delete transaksi ", err.Error())
+		return false, errors.New("error setelah delete transaksi")
+	}
+
+	if affRows <= 0 {
+		log.Println("no record affected")
+		return false, errors.New("no record")
+	}
+	return true, nil
 }

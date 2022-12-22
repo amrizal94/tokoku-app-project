@@ -14,33 +14,18 @@ import (
 	"tokoku-app-project/transaksibarang"
 )
 
-var (
-	cfg                 = config.ReadConfig()
-	conn                = config.ConnectSQL(*cfg)
-	PegawaiMenu         = pegawai.NewPegawaiMenu(conn)
-	BarangMenu          = barang.NewBarangMenu(conn)
-	PelangganMenu       = pelanggan.NewPelangganMenu(conn)
-	TransaksiMenu       = transaksi.NewTransaksiMenu(conn)
-	TransaksiBarangMenu = transaksibarang.NewTransaksiBarangMenu(conn)
-)
-
-func listTransaksiBarang(id int) ([]transaksibarang.TransaksiBarang, string, error) {
-	arrTransaksiBarang, err := TransaksiBarangMenu.Select(id)
-
-	var strTransaksiBarang string
-	if err != nil {
-		fmt.Println(err.Error())
-		return arrTransaksiBarang, strTransaksiBarang, err
-	}
-	for _, v := range arrTransaksiBarang {
-		strTransaksiBarang += fmt.Sprintf("%s %d x %d %d\n", v.GetNama(), v.GetJumlah(), v.GetHarga(), v.GetTotal())
-	}
-	return arrTransaksiBarang, strTransaksiBarang, err
-}
 func callClear() { cmd := exec.Command("clear"); cmd.Stdout = os.Stdout; cmd.Run() }
+
 func main() {
 	var (
-		inputMenu int = 1
+		cfg                     = config.ReadConfig()
+		conn                    = config.ConnectSQL(*cfg)
+		PegawaiMenu             = pegawai.NewPegawaiMenu(conn)
+		BarangMenu              = barang.NewBarangMenu(conn)
+		PelangganMenu           = pelanggan.NewPelangganMenu(conn)
+		TransaksiMenu           = transaksi.NewTransaksiMenu(conn)
+		TransaksiBarangMenu     = transaksibarang.NewTransaksiBarangMenu(conn)
+		inputMenu           int = 1
 	)
 	for inputMenu != 0 {
 		fmt.Println("==========================")
@@ -61,14 +46,14 @@ func main() {
 			fmt.Scanln(&inPassword)
 			callClear()
 			fmt.Println("==========================")
-			resLogin, err := PegawaiMenu.Login(inNama, inPassword)
+			resLogin, err := PegawaiMenu.Login(inNama, inPassword) //mengambil method login dari package pegawai
 			if err != nil {
 				fmt.Println(err.Error())
 			}
 			if resLogin.GetID() > 0 {
 				fmt.Println("Login sukses, selamat datang", resLogin.GetNama())
 				isLogged := true
-				var isAdmin bool
+				var isAdmin bool // false
 				if resLogin.GetUsername() == "admin" && inPassword == "admin" {
 					isAdmin = !isAdmin
 				}
@@ -485,7 +470,7 @@ func main() {
 										if len(arrTransaksi) > 0 {
 											sellMode := true
 											for sellMode {
-												_, strTransaksiBarang, err := listTransaksiBarang(idInserted)
+												_, strTransaksiBarang, err := TransaksiBarangMenu.Data(idInserted)
 												if err != nil {
 													fmt.Println(err.Error())
 												}
@@ -578,25 +563,95 @@ func main() {
 							deleteMode := true
 							for deleteMode {
 								var inID int
-								_, strTransaksi, err := TransaksiMenu.Data(inID)
+								arrTransaksi, _, err := TransaksiMenu.Data(inID)
 								if err != nil {
 									fmt.Println(err.Error())
 								}
-								if len(strTransaksi) > 0 {
+								if len(arrTransaksi) > 0 {
 									fmt.Println("==========================")
 									fmt.Println("HAPUS TRANSAKSI")
 									fmt.Println()
 									fmt.Println("Pilih BARANG")
 									fmt.Println()
-									fmt.Println("ID Transaksi\t| Waktu\t\t\t| Kasir\t\t\t| Pelanggan")
+									fmt.Println("ID Transaksi\t| Waktu\t\t\t| Kasir\t\t\t| Amount\t|\t Pelanggan")
 									fmt.Println()
-									fmt.Println(strTransaksi)
+									for _, v := range arrTransaksi {
+										amount, _ := TransaksiBarangMenu.Amount(v.GetID())
+										tmp := amount
+										count := 0
+										for tmp > 0 {
+											tmp = tmp / 10
+											count++
+										}
+										count /= 6
+										tabAmount := strings.Repeat("\t", 2)
+										tabAmount = tabAmount[:len(tabAmount)-count]
+										fmt.Printf("%d\t\t| %s\t| %s\t| %d%s|%s\n", v.GetID(), v.GetTanggal(), v.GetNamaPegawai(), amount, tabAmount, v.GetNamaPelanggan())
+									}
+									fmt.Println()
+									fmt.Println("Pilih ID transaksi untuk detail lebih lanjut")
 									fmt.Print("Masukkan ID Transaksi / 0. Kembali : ")
 									fmt.Scanln(&inID)
+									callClear()
 									if inID == 0 {
 										callClear()
 										deleteMode = !deleteMode
 										continue
+									}
+									_, strTransaksiBarang, err := TransaksiBarangMenu.Data(inID)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+									var inHapus string
+									inChoice := true
+									amount, _ := TransaksiBarangMenu.Amount(inID)
+									for inChoice {
+										fmt.Println("==========================")
+										fmt.Println("HAPUS TRANSAKSI")
+										fmt.Println()
+										fmt.Print("No. Transaksi\t:")
+										fmt.Println(inID)
+										fmt.Print("Waktu\t\t:")
+										fmt.Println(arrTransaksi[0].GetTanggal())
+										fmt.Print("Kasir\t\t:")
+										fmt.Printf("%d <%s>\n", arrTransaksi[0].GetIDPegawai(), arrTransaksi[0].GetNamaPegawai())
+										fmt.Print("Pelanggan\t:")
+										fmt.Printf("%s <%s>\n", arrTransaksi[0].GetHP(), arrTransaksi[0].GetNamaPelanggan())
+										fmt.Println()
+										if len(strTransaksiBarang) > 0 {
+											fmt.Print(strTransaksiBarang)
+										} else {
+											fmt.Println("Belum ada barang yang dipilih")
+										}
+
+										if err != nil {
+											fmt.Println(err.Error())
+										}
+										fmt.Println()
+										fmt.Println("Total bayar : ", amount)
+										fmt.Println()
+										fmt.Print("Yakin ingin menghapus? (ya/tidak) : ")
+										fmt.Scanln(&inHapus)
+										inHapus = strings.ToLower(inHapus)
+										callClear()
+										fmt.Println("==========================")
+										if inHapus == "ya" {
+											isDeleted, err := TransaksiMenu.Delete(inID)
+											if err != nil {
+												fmt.Println(err.Error())
+											}
+											if isDeleted {
+												fmt.Println("berhasil menghapus transaksi")
+												inChoice = !inChoice
+											} else {
+												fmt.Println("gagal menghapus transaksi")
+												inChoice = !inChoice
+											}
+										} else if inHapus == "tidak" {
+											callClear()
+											inChoice = !inChoice
+											continue
+										}
 									}
 								}
 
