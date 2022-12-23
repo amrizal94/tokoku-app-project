@@ -48,13 +48,13 @@ func main() {
 			fmt.Print("Masukkan password : ")
 			fmt.Scanln(&inPassword)
 			callClear()
-			fmt.Println("==========================")
+
 			resLogin, err := PegawaiMenu.Login(inNama, inPassword) //mengambil method login dari package pegawai
 			if err != nil {
 				fmt.Println(err.Error())
 			}
 			if resLogin.GetID() > 0 {
-				fmt.Println("Login sukses, selamat datang", resLogin.GetNama())
+
 				isLogged := true
 				var isAdmin bool // false
 				if resLogin.GetUsername() == "admin" && inPassword == "admin" {
@@ -62,6 +62,10 @@ func main() {
 				}
 				for isLogged {
 					fmt.Println("==========================")
+					fmt.Println("Login sukses, selamat datang", resLogin.GetNama())
+					fmt.Println("==========================")
+					fmt.Println()
+					fmt.Println("PILIH MENU")
 					if isAdmin {
 						fmt.Println("1. Tambah Pegawai")
 						fmt.Println("2. Hapus Pegawai")
@@ -772,86 +776,95 @@ func main() {
 							}
 						}
 					case 6:
-						increaseMode := true
-						for increaseMode {
-							var inBarcode int
-							_, strBarang, err := BarangMenu.Data(inBarcode)
-							if err != nil {
-								fmt.Println(err.Error())
-							}
-							if len(strBarang) > 0 {
-								fmt.Println("==========================")
-								fmt.Println("TAMBAH STOK BARANG")
-								fmt.Println()
-								fmt.Println("Barcode\t| Barang {Stok} [Harga] <Created By>")
-								fmt.Println()
-								fmt.Print(strBarang)
-								fmt.Println()
-								fmt.Print("Masukkan barcode / 0. Kembali : ")
-								fmt.Scanln(&inBarcode)
-								fmt.Println("==========================")
-								if inBarcode == 0 {
-									increaseMode = !increaseMode
-									callClear()
-									continue
+						if !isAdmin {
+							increaseMode := true
+							for increaseMode {
+								var inBarcode int
+								_, strBarang, err := BarangMenu.Data(inBarcode)
+								if err != nil {
+									fmt.Println(err.Error())
 								}
-								callClear()
-								stokMode := true
-								for stokMode {
-									arrBarang, strBarang, err := BarangMenu.Data(inBarcode)
-									if err != nil {
-										fmt.Println(err.Error())
-									}
-									if len(arrBarang) > 0 {
-										idx := strings.Index(strBarang, "<")
-										createdBy := strBarang[idx+1 : len(strBarang)-2]
-										var inStok int
-										fmt.Println("==========================")
-										fmt.Println("TAMBAH STOK BARANG")
-										fmt.Println()
-										fmt.Print("Barcode\t\t:")
-										fmt.Println(arrBarang[0].GetBarcode())
-
-										fmt.Print("Nama barang\t:")
-										fmt.Println(arrBarang[0].GetNamaBarang())
-										fmt.Print("Stok\t\t:")
-										fmt.Println(arrBarang[0].GetStok())
-										fmt.Print("Harga\t\t:")
-										fmt.Println(arrBarang[0].GetHarga())
-										fmt.Print("Created by\t:")
-										fmt.Println(createdBy)
-										fmt.Println()
-										fmt.Print("Masukkan stok barang / 0. Kembali: ")
-										fmt.Scanln(&inStok)
-										if inStok == 0 {
-											stokMode = !stokMode
-											callClear()
-											continue
-										}
+								if len(strBarang) > 0 {
+									fmt.Println("==========================")
+									fmt.Println("TAMBAH STOK BARANG")
+									fmt.Println()
+									fmt.Println("Barcode\t| Barang {Stok} [Harga] <Created By>")
+									fmt.Println()
+									fmt.Print(strBarang)
+									fmt.Println()
+									fmt.Print("Masukkan barcode / 0. Kembali : ")
+									fmt.Scanln(&inBarcode)
+									fmt.Println("==========================")
+									if inBarcode == 0 {
+										increaseMode = !increaseMode
 										callClear()
-										fmt.Println("==========================")
-										isEdited, err := BarangMenu.IncreaseStok(inStok, arrBarang[0].GetBarcode())
+										continue
+									}
+									callClear()
+									stokMode := true
+									for stokMode {
+										arrBarang, strBarang, err := BarangMenu.Data(inBarcode)
 										if err != nil {
 											fmt.Println(err.Error())
 										}
-										if isEdited {
-											fmt.Println("berhasil tambah stok barang")
+										if len(arrBarang) > 0 {
+											idx := strings.Index(strBarang, "<")
+											createdBy := strBarang[idx+1 : len(strBarang)-2]
+											var inStok int
+											fmt.Println("==========================")
+											fmt.Println("TAMBAH STOK BARANG")
+											fmt.Println()
+											fmt.Print("Barcode\t\t:")
+											fmt.Println(arrBarang[0].GetBarcode())
+
+											fmt.Print("Nama barang\t:")
+											fmt.Println(arrBarang[0].GetNamaBarang())
+											fmt.Print("Stok\t\t:")
+											fmt.Println(arrBarang[0].GetStok())
+											fmt.Print("Harga\t\t:")
+											fmt.Println(arrBarang[0].GetHarga())
+											fmt.Print("Created by\t:")
+											fmt.Println(createdBy)
+											fmt.Println()
+											fmt.Print("Masukkan stok barang / 0. Kembali: ")
+											fmt.Scanln(&inStok)
+											if inStok == 0 {
+												stokMode = !stokMode
+												callClear()
+												continue
+											}
+											callClear()
+											fmt.Println("==========================")
+											isEdited, err := BarangMenu.IncreaseStok(inStok, arrBarang[0].GetBarcode())
+											if err != nil {
+												fmt.Println(err.Error())
+											}
+											if isEdited {
+												fmt.Println("berhasil tambah stok barang")
+											} else {
+												fmt.Println("gagal tambah stok barang")
+											}
 										} else {
-											fmt.Println("gagal tambah stok barang")
+											fmt.Println("==========================")
+											fmt.Println("Barang tidak ditemukan")
+											stokMode = !stokMode
 										}
-									} else {
-										fmt.Println("==========================")
-										fmt.Println("Barang tidak ditemukan")
-										stokMode = !stokMode
 									}
 								}
 							}
+						} else {
+							fmt.Println("==========================")
+							fmt.Println("Menu Belum Tersedia")
 						}
 					case 9:
 						isLogged = !isLogged
 					case 0:
 						isLogged = !isLogged
+					default:
+						fmt.Println("==========================")
+						fmt.Println("Menu Belum Tersedia")
 					}
+
 				}
 			}
 		}
