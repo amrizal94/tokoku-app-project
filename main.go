@@ -74,6 +74,7 @@ func main() {
 						fmt.Println("3. Edit Barang")
 						fmt.Println("4. Transaksi")
 						fmt.Println("5. Lihat Transaksi")
+						fmt.Println("6. Tambah Stok")
 					}
 					fmt.Println("9. Log out")
 					fmt.Println("0. Exit")
@@ -373,7 +374,7 @@ func main() {
 										if isEdited {
 											fmt.Println("berhasil edit informasi barang")
 										} else {
-											fmt.Println("berhasil edit informasi barang")
+											fmt.Println("gagal edit informasi barang")
 										}
 									} else {
 										fmt.Println("Barang tidak ditemukan")
@@ -766,6 +767,82 @@ func main() {
 									} else {
 										fmt.Println("==========================")
 										fmt.Println("Data tidak ditemukan")
+									}
+								}
+							}
+						}
+					case 6:
+						increaseMode := true
+						for increaseMode {
+							var inBarcode int
+							_, strBarang, err := BarangMenu.Data(inBarcode)
+							if err != nil {
+								fmt.Println(err.Error())
+							}
+							if len(strBarang) > 0 {
+								fmt.Println("==========================")
+								fmt.Println("TAMBAH STOK BARANG")
+								fmt.Println()
+								fmt.Println("Barcode\t| Barang {Stok} [Harga] <Created By>")
+								fmt.Println()
+								fmt.Print(strBarang)
+								fmt.Println()
+								fmt.Print("Masukkan barcode / 0. Kembali : ")
+								fmt.Scanln(&inBarcode)
+								fmt.Println("==========================")
+								if inBarcode == 0 {
+									increaseMode = !increaseMode
+									callClear()
+									continue
+								}
+								callClear()
+								stokMode := true
+								for stokMode {
+									arrBarang, strBarang, err := BarangMenu.Data(inBarcode)
+									if err != nil {
+										fmt.Println(err.Error())
+									}
+									if len(arrBarang) > 0 {
+										idx := strings.Index(strBarang, "<")
+										createdBy := strBarang[idx+1 : len(strBarang)-2]
+										var inStok int
+										fmt.Println("==========================")
+										fmt.Println("TAMBAH STOK BARANG")
+										fmt.Println()
+										fmt.Print("Barcode\t\t:")
+										fmt.Println(arrBarang[0].GetBarcode())
+
+										fmt.Print("Nama barang\t:")
+										fmt.Println(arrBarang[0].GetNamaBarang())
+										fmt.Print("Stok\t\t:")
+										fmt.Println(arrBarang[0].GetStok())
+										fmt.Print("Harga\t\t:")
+										fmt.Println(arrBarang[0].GetHarga())
+										fmt.Print("Created by\t:")
+										fmt.Println(createdBy)
+										fmt.Println()
+										fmt.Print("Masukkan stok barang / 0. Kembali: ")
+										fmt.Scanln(&inStok)
+										if inStok == 0 {
+											stokMode = !stokMode
+											callClear()
+											continue
+										}
+										callClear()
+										fmt.Println("==========================")
+										isEdited, err := BarangMenu.IncreaseStok(inStok, arrBarang[0].GetBarcode())
+										if err != nil {
+											fmt.Println(err.Error())
+										}
+										if isEdited {
+											fmt.Println("berhasil tambah stok barang")
+										} else {
+											fmt.Println("gagal tambah stok barang")
+										}
+									} else {
+										fmt.Println("==========================")
+										fmt.Println("Barang tidak ditemukan")
+										stokMode = !stokMode
 									}
 								}
 							}
