@@ -1,3 +1,5 @@
+github.com/amrizal94/config v1.0.0 h1:w49XUcSTd7UGF0Gd4Mwwetr2hqzwXMjM04Bu48yOlug=
+github.com/amrizal94/config v1.0.0/go.mod h1:Uq7QJ9g+U7vvhLud9HrGmF535YYvFGAyGR7kFazhz0w=
 github.com/go-sql-driver/mysql v1.7.0 h1:ueSltNNllEqE3qcWBTD0iQd3IpL/6U+mJxLkazJ7YPc=
 github.com/go-sql-driver/mysql v1.7.0/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=
 github.com/joho/godotenv v1.4.0 h1:3l4+N6zfMWnkbPEXKng2o2/MR5mSwTrBih4ZEkkz1lg=

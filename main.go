@@ -7,11 +7,12 @@ import (
 	"os/exec"
 	"strings"
 	"tokoku-app-project/barang"
-	"tokoku-app-project/config"
 	"tokoku-app-project/pegawai"
 	"tokoku-app-project/pelanggan"
 	"tokoku-app-project/transaksi"
 	"tokoku-app-project/transaksibarang"
+
+	"github.com/amrizal94/config"
 )
 
 func callClear() { cmd := exec.Command("clear"); cmd.Stdout = os.Stdout; cmd.Run() }
