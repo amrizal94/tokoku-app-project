@@ -12,14 +12,14 @@ import (
 	"tokoku-app-project/transaksi"
 	"tokoku-app-project/transaksibarang"
 
-	"github.com/amrizal94/config"
+	"github.com/amrizal94/config/v3"
 )
 
 func callClear() { cmd := exec.Command("clear"); cmd.Stdout = os.Stdout; cmd.Run() }
 
 func main() {
 	var (
-		cfg                     = config.ReadConfig()
+		cfg                     = config.ReadConfig("local.env")
 		conn                    = config.ConnectSQL(*cfg)
 		PegawaiMenu             = pegawai.NewPegawaiMenu(conn)
 		BarangMenu              = barang.NewBarangMenu(conn)
