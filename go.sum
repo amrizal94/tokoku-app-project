@@ -2,6 +2,10 @@ github.com/amrizal94/config v1.0.0 h1:w49XUcSTd7UGF0Gd4Mwwetr2hqzwXMjM04Bu48yOlu
 github.com/amrizal94/config v1.0.0/go.mod h1:Uq7QJ9g+U7vvhLud9HrGmF535YYvFGAyGR7kFazhz0w=
 github.com/amrizal94/config/v3 v3.0.0 h1:uq+q96WL50g8ac01tB72TkOp/qGK7EaFVDWzKqwBlSU=
 github.com/amrizal94/config/v3 v3.0.0/go.mod h1:hSZLZwTZZ5m8PToDP+Z6C7oa50pbqBNVrq4PyacNKls=
+github.com/amrizal94/config/v3 v3.1.0 h1:T1WZL3PrIqpz/08nCix/o47owH3/BhyrWNtHP4hPZPs=
+github.com/amrizal94/config/v3 v3.1.0/go.mod h1:H6ylXafH1l/L3nIKJ40PCeb9IF1TAv+Bb8SZf3LNAq4=
+github.com/amrizal94/config/v3 v3.2.0 h1:Tp4TrUXuNarxIcNO20i2ehUfMeNGRtPlcok0jM0dsAU=
+github.com/amrizal94/config/v3 v3.2.0/go.mod h1:H6ylXafH1l/L3nIKJ40PCeb9IF1TAv+Bb8SZf3LNAq4=
 github.com/go-sql-driver/mysql v1.7.0 h1:ueSltNNllEqE3qcWBTD0iQd3IpL/6U+mJxLkazJ7YPc=
 github.com/go-sql-driver/mysql v1.7.0/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=
 github.com/joho/godotenv v1.4.0 h1:3l4+N6zfMWnkbPEXKng2o2/MR5mSwTrBih4ZEkkz1lg=
